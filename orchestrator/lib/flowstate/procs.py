@@ -1,16 +1,19 @@
-"""Subprocess execution shared by script nodes and gates."""
+"""Subprocess execution: synchronous (gates) and detached (script nodes, reducers)."""
 
 import json
 import os
 import shlex
 import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 from .errors import FlowstateError
 from .paths import VENV_BIN
 from .templating import format_value
+
+RUNNER = Path(__file__).resolve().parent / "script_runner.py"
 
 
 def script_argv(path: Path) -> list[str]:
@@ -65,6 +68,70 @@ def run_captured(argv: list[str], cwd: Path, env: dict, timeout_s: float | None,
               "stdout": str(out_path), "stderr": str(err_path)}
     (log_dir / f"{stem}.result.json").write_text(json.dumps(result, indent=2) + "\n")
     return result
+
+
+def launch_detached(argv: list[str], cwd: Path, env: dict[str, str], timeout_s: float | None,
+                    log_dir: Path, stem: str) -> int:
+    """Start script_runner in its own session; returns the runner pid (also its process group)."""
+    log_dir.mkdir(parents=True, exist_ok=True)
+    for suffix in ("exit_code", "result.json", "runner.pid"):
+        (log_dir / f"{stem}.{suffix}").unlink(missing_ok=True)
+    evidence_env = {k: v for k, v in env.items() if k.startswith("FLOWSTATE_")}
+    (log_dir / f"{stem}.command.json").write_text(json.dumps(
+        {"argv": argv, "cwd": str(cwd), "timeout_s": timeout_s, "env": evidence_env}, indent=2) + "\n")
+    with open(log_dir / f"{stem}.runner.log", "ab") as runner_log:
+        proc = subprocess.Popen([sys.executable, str(RUNNER), str(log_dir), stem], cwd=cwd, env=env,
+                                stdin=subprocess.DEVNULL, stdout=runner_log, stderr=runner_log,
+                                start_new_session=True)
+    (log_dir / f"{stem}.runner.pid").write_text(f"{proc.pid}\n")
+    return proc.pid
+
+
+def pid_alive(pid: int | None) -> bool:
+    if not pid:
+        return False
+    try:
+        reaped, _ = os.waitpid(pid, os.WNOHANG)  # reap our own finished children (no zombies)
+        if reaped == pid:
+            return False
+        return True
+    except ChildProcessError:
+        pass  # launched by an earlier flowstate process
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def detached_state(log_dir: Path, stem: str) -> dict:
+    """finished (with result) | running | lost (runner gone without writing its exit marker)."""
+    exit_marker = log_dir / f"{stem}.exit_code"
+    if exit_marker.exists():
+        return {"state": "finished", **json.loads((log_dir / f"{stem}.result.json").read_text())}
+    try:
+        pid = int((log_dir / f"{stem}.runner.pid").read_text().strip())
+    except (FileNotFoundError, ValueError):
+        pid = None
+    if pid_alive(pid) and not exit_marker.exists():
+        return {"state": "running", "pid": pid}
+    if exit_marker.exists():
+        return detached_state(log_dir, stem)
+    return {"state": "lost", "pid": pid}
+
+
+def kill_detached(log_dir: Path, stem: str) -> bool:
+    try:
+        pid = int((log_dir / f"{stem}.runner.pid").read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return False
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return False
+    return True
 
 
 def tail(path: str | Path, lines: int = 20) -> str:

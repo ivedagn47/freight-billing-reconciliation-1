@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Item List",
+  "type": "object",
+  "required": ["_session_id", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "_session_id": { "type": "string", "minLength": 1 },
+    "items": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}

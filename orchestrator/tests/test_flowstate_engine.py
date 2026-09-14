@@ -95,7 +95,7 @@ def test_init_creates_layout_state_and_event(runs):
     (SMOKE, ["research_topic=x", "research_brief=/tmp/x"], {}, "not_an_input"),
     (SMOKE, ["research_topic"], {}, "invalid_variable"),
     (SMOKE, ["research_topic=x"], {"harness": "fake"}, "fake_script_missing"),
-    (str(FLOWS_DIR / "smoke-branch"), [], {}, "invalid_flow"),
+    (str(FLOWS_DIR / "no-such-flow"), [], {}, "flow_not_found"),
 ])
 def test_init_rejects_bad_input_before_creating_a_run(runs, flow_ref, var_pairs, kwargs, code):
     with pytest.raises(FlowstateError) as exc:
@@ -231,8 +231,15 @@ def test_cli_json_output_and_errors(tmp_path, runs, capsys):
     assert [e["type"] for e in json.loads(capsys.readouterr().out)] == ["run_completed"]
     assert cli.main(["--runs-dir", runs, "status", "nope"]) == 1
     assert json.loads(capsys.readouterr().out)["error"]["code"] == "run_not_found"
-    assert cli.main(["validate", str(FLOWS_DIR / "smoke-branch")]) == 1
+    assert cli.main(["validate", str(FLOWS_DIR / "smoke-branch")]) == 0
     capsys.readouterr()
+    broken = write_flow(tmp_path / "broken", "b", SCRIPT_FLOW_DOT.replace("scripts/make.sh", "x.sh"),
+                        SCRIPT_FLOW_YML, SCRIPT_FLOW_FILES)
+    assert cli.main(["validate", str(broken)]) == 1
+    assert json.loads(capsys.readouterr().out)["ok"] is False
+    with pytest.raises(FlowstateError) as exc:
+        engine.init_run(str(broken), ["greeting=hi"], run_id="bad", runs_dir=runs)
+    assert exc.value.code == "invalid_flow" and not (Path(runs) / "bad").exists()
 
 
 # ------------------------------------------------------------------ agent nodes (fake harness via agentctl + tmux)

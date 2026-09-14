@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Item Description",
+  "type": "object",
+  "required": ["_session_id", "item", "branch_id", "text"],
+  "additionalProperties": false,
+  "properties": {
+    "_session_id": { "type": "string", "minLength": 1 },
+    "item": { "type": "string", "minLength": 1 },
+    "branch_id": { "type": "string", "minLength": 1 },
+    "text": { "type": "string", "minLength": 1 }
+  }
+}

@@ -3,9 +3,9 @@
     runs/<run_id>/
         state.yaml      authoritative; only mutated inside RunStore.transaction()
         events.jsonl    append-only evidence, written after the state change it describes
-        artefacts/      node outputs ({_run_artefact_dir})
+        artefacts/      node outputs ({_run_artefact_dir}); branch outputs under branches/<branch_id>/
         workers/        agentctl registry: workers/<worker_id>/ (prompt, transcripts, exit codes)
-        logs/           script stdout/stderr, gate evidence, snapshots of rejected outputs
+        logs/           script and reducer output, gate evidence, snapshots of rejected outputs
 
 Two locks: `.state.lock` serialises every read-modify-write of state.yaml (held briefly),
 and `.advance.lock` is a non-blocking lease so only one `advance` drives a run at a time
@@ -23,6 +23,10 @@ from pathlib import Path
 import yaml
 
 from .errors import FlowstateError
+
+# libyaml when available: state.yaml is re-read on every poll and grows with branch count.
+_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+_DUMPER = getattr(yaml, "CSafeDumper", yaml.SafeDumper)
 
 
 def now_iso() -> str:
@@ -59,7 +63,7 @@ class RunStore:
 
     def read(self) -> dict:
         try:
-            data = yaml.safe_load(self.state_path.read_text())
+            data = yaml.load(self.state_path.read_text(), Loader=_LOADER)
         except FileNotFoundError as exc:
             raise FlowstateError("run_not_found", f"no state.yaml in {self.dir}") from exc
         if not isinstance(data, dict):
@@ -71,7 +75,7 @@ class RunStore:
         state["updated_at"] = now_iso()
         fd, tmp = tempfile.mkstemp(dir=self.dir, prefix=".state.", suffix=".yaml")
         with os.fdopen(fd, "w") as fh:
-            yaml.safe_dump(state, fh, sort_keys=False, default_flow_style=False, allow_unicode=True)
+            yaml.dump(state, fh, Dumper=_DUMPER, sort_keys=False, default_flow_style=False, allow_unicode=True)
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, self.state_path)

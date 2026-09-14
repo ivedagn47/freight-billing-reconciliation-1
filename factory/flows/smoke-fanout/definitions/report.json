@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fan-out Report",
+  "type": "object",
+  "required": ["_session_id", "branch_count", "items", "summary_count"],
+  "additionalProperties": false,
+  "properties": {
+    "_session_id": { "type": "string", "minLength": 1 },
+    "branch_count": { "type": "integer", "minimum": 0 },
+    "items": { "type": "array", "items": { "type": "string" } },
+    "summary_count": { "type": "integer", "minimum": 0 }
+  }
+}

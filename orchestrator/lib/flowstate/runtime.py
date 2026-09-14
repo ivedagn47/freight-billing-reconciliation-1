@@ -5,9 +5,11 @@ from pathlib import Path
 from .errors import FlowstateError
 from .loader import load_flow
 from .model import Flow, Node
+from .scope import TOP, Scope
 from .state import now_iso
 
-RETRYABLE = {"validation_failed", "gate_failed", "worker_failed", "script_failed", "node_interrupted"}
+RETRYABLE = {"validation_failed", "gate_failed", "worker_failed", "script_failed", "node_interrupted",
+             "reducer_failed", "reducer_output_invalid", "reducer_interrupted"}
 RESPAWNABLE = {"validation_failed", "gate_failed", "worker_failed", "worker_stalled", "worker_timeout"}
 MAX_REPORTED_ERRORS = 10
 
@@ -18,12 +20,18 @@ OPTIONS = {
     "worker_stalled": ["advance --stall-after <seconds>", "respawn", "abort"],
     "worker_timeout": ["advance", "respawn", "abort"],
     "worker_running": ["advance"],
+    "script_running": ["advance"],
+    "branches_running": ["advance"],
     "script_failed": ["retry", "abort"],
     "node_interrupted": ["retry", "abort"],
     "render_failed": ["abort"],
     "condition_error": ["abort"],
     "no_route": ["abort"],
     "ambiguous_route": ["abort"],
+    "fanout_invalid": ["abort"],
+    "reducer_failed": ["retry", "abort"],
+    "reducer_output_invalid": ["retry", "abort"],
+    "reducer_interrupted": ["retry", "abort"],
     "retries_exhausted": ["abort"],
     "paused": ["resume", "abort"],
     "busy": ["advance (after the other advance finishes)"],
@@ -46,15 +54,20 @@ def max_retries(node: Node, state: dict) -> int:
     return node.max_retries if node.max_retries is not None else int(state["config"]["max_retries"])
 
 
-def node_vars(state: dict, node_id: str, extra: dict | None = None) -> dict:
-    return {**state["variables"], "_node_id": node_id, **(extra or {})}
+def node_vars(state: dict, node_id: str, extra: dict | None = None, scope: Scope = TOP) -> dict:
+    return {**scope.variables(state), "_node_id": node_id, **(extra or {})}
 
 
-def situation(state: dict, kind: str, node_id: str | None = None, **details) -> dict:
+def situation(state: dict, kind: str, node_id: str | None = None, scope: Scope = TOP, **details) -> dict:
     sit = {"situation": kind, "run_id": state["run_id"], "at": now_iso()}
     options = list(OPTIONS.get(kind, []))
+    if scope.is_branch:
+        br = scope.branch_state(state)
+        sit.update(parallel_node=scope.parallel, branch_id=scope.branch, branch_index=br["index"])
+        if "item" in br["context"]:
+            sit["item"] = br["context"]["item"]
     if node_id:
-        ns = state["nodes"][node_id]
+        ns = scope.node(state, node_id)
         sit.update(node=node_id, node_kind=ns["kind"], attempt=len(ns.get("attempts") or []),
                    retries_used=ns.get("retries_used", 0))
         if ns["kind"] != "agent":
@@ -65,8 +78,33 @@ def situation(state: dict, kind: str, node_id: str | None = None, **details) -> 
         if total > MAX_REPORTED_ERRORS:
             details["errors_truncated"] = total - MAX_REPORTED_ERRORS
     sit.update({k: v for k, v in details.items() if v is not None})
+    if scope.is_branch and options and options[0] in ("retry", "respawn"):
+        options = [f"{o} --branch {scope.branch}" if o in ("retry", "respawn") else o for o in options]
     sit["options"] = options
     return sit
+
+
+def run_level_situation(state: dict) -> dict | None:
+    """Run-status situations and the pending top-level situation, if any."""
+    if state["status"] == "aborted":
+        return situation(state, "aborted", reason=(state.get("abort") or {}).get("reason"))
+    if state["status"] == "completed":
+        return situation(state, "completed", variables=public_vars(state))
+    if state["status"] == "paused":
+        pause = dict(state.get("pause") or {})
+        paused_at = pause.pop("at", None)
+        node, branch, parallel = pause.pop("node", None), pause.pop("branch", None), pause.pop("parallel", None)
+        scope = Scope(parallel, branch) if branch else TOP
+        return situation(state, "paused", node, scope, paused_at=paused_at, **pause)
+    return state.get("situation")
+
+
+def public_vars(state: dict) -> dict:
+    return {k: v for k, v in state["variables"].items() if not k.startswith("_")}
+
+
+def event_fields(sit: dict) -> dict:
+    return {k: v for k, v in sit.items() if k not in ("run_id", "options", "at")}
 
 
 def prompt_footer(session_id: str, cwd: Path) -> str:

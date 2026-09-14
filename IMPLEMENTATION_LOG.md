@@ -276,3 +276,197 @@ workers, recovery in a new CLI process without duplicate work, crash between rec
 - Output validation assumes JSON files with schemas; non-JSON outputs (e.g. memos) need an
   extension in Phase 6.
 - The graph-orchestrator skill that responds to situations does not exist yet (Phase 4).
+
+---
+
+## Phase 3 — fork, join and dynamic_fanout (2026-09-14)
+
+### Starting state and what the kit dictates
+
+- `smoke-branch.dot`: `fork → worker_a, worker_b → j (runner=join, reducer_script="scripts/reduce.sh",
+  summary_var="branch_summary") → merge_notes`. The join's description says the reducer fires "on each
+  arrival to maintain branch_summary"; `merge_notes.sh` reads `note_a`/`note_b` "set by flowstate scope
+  merge"; `branch_summary` is `type: dict`. `scripts/reduce.sh` is missing from the kit.
+- The kit has no `dynamic_fanout` example, so its attributes (`items`, `max_items`, `max_parallel`)
+  were designed here, following the plan ("reads a JSON list from a variable… `{_branch_id}` and
+  `{item}` available… an empty list skips straight to the join").
+- Phase 2 ran script nodes synchronously inside `advance`, which cannot run branches in parallel or
+  survive `advance` being killed mid-script.
+
+### What was built
+
+| Module | Change |
+|---|---|
+| `scope.py` (new) | `Scope`: where a node's state lives — state.yaml root or `parallel.<p>.branches.<b>` — so node execution is written once |
+| `execution.py` (new) | Agent/script node execution extracted from Phase 2 `engine.py`, scope-aware, as non-blocking steps (`progress`/`waiting`/`blocked`/`arrived`/`transient`/`decision`) |
+| `parallel.py` (new) | Branch creation, the branch driver, ordered reducer folding, merge, join completion |
+| `script_runner.py` (new), `procs.py` | Detached script execution with an exit marker; pid liveness that reaps our own children; group kill |
+| `engine.py` | Top-level cursor loop delegating to execution/parallel; retry/respawn/resume with branches; abort kills branch workers, scripts and reducers; status `parallel` summary |
+| `loader.py`, `validate.py`, `model.py` | Fork/join/fan-out attributes, `Region` analysis, region rules, branch-aware availability, node-id format, reserved `item` |
+| `runtime.py` | Branch fields on situations, new situation kinds, `run_level_situation` moved here |
+| `state.py` | libyaml loader/dumper when available |
+| `cli.py` | `--branch` for `retry` and `respawn` |
+| `smoke-branch/scripts/reduce.sh` | Minimal kit fixture exercising the reducer contract |
+| `factory/flows/smoke-fanout/` | New demo flow for `dynamic_fanout` (agent + gate + script inside the template, reducer, list merge) |
+
+### State model (extends Phase 2; Phase 2 keys unchanged)
+
+```yaml
+cursor: fan                      # stays on the parallel node while its region runs
+nodes:
+  fan: {kind: dynamic_fanout, status: running, ...}
+  describe: {kind: agent, status: in_branches, parallel: fan}   # marker only
+parallel:
+  fan:
+    kind: dynamic_fanout         # or fork
+    join: collect
+    status: running              # running | merged | completed
+    items_var: items
+    items: [alpha, beta, gamma]  # the list as consumed; never re-read
+    max_parallel: 3
+    branch_order: [fan-0000, fan-0001, fan-0002]
+    branches:
+      fan-0001:
+        index: 1
+        entry: describe
+        status: completed        # pending | running | awaiting_decision | completed
+        cursor: null             # node executing now; null once arrived at the join
+        context: {_branch_id: fan-0001, _branch_index: 1, _parallel_node: fan,
+                  _run_artefact_dir: <run>/artefacts/branches/fan-0001, item: beta}
+        variables: {description: ..., stamp: ...}   # produced in this branch only
+        nodes: {describe: <Phase 2 node record with attempts/workers>, stamp: ...}
+        situation: null          # a persisted branch situation, if any
+    join_state:
+      status: completed          # waiting | merged | completed
+      folded: [fan-0000, fan-0001, fan-0002]
+      summary: {...}             # summary_var so far
+      reducer_runs: [{run, branch_id, fold, log_dir, runner_pid, outcome, exit_code}]
+      merged_variables: {description: [...], stamp: [...], fanout_summary: {...}}
+```
+
+This answers, without replaying events: which parallel node is active (cursor + `status`), which
+branches exist and their items, each branch's current node, completed/failed branches, workers per
+branch (attempt `worker_id`s), pending branch situations, whether the join completed, and the merged
+variables.
+
+### Semantics and decisions
+
+- **Regions.** A fork/fan-out owns the nodes between it and exactly one join. Rejected statically:
+  branches reaching `done`/`start` without the join (`branch_escapes`), several joins
+  (`unmatched_join`), a join with inputs from outside its region or closing two regions
+  (`invalid_join`), joins closing nothing (`orphan_join`), shared fork nodes
+  (`overlapping_branches`), entry from outside (`branch_entered_from_outside`), fork/fan-out inside a
+  region (`nested_parallel`), direct `fork -> join` (`empty_branch`), conditions/gates on edges leaving
+  the parallel node (`invalid_branch_edge`), overlapping fork variables or region variables produced
+  outside (`branch_variable_conflict`), branch builtins used outside a region
+  (`branch_variable_outside_region`). All existing Phase 2 checks still run.
+- **Branch ids** are deterministic and persisted at creation: fork `<fork>-<entry>` in sorted entry
+  order; fan-out `<fanout>-NNNN` by list position (four digits minimum). Items are stored in state, so
+  a restart never re-reads or re-interprets the list, and completed branches are never recreated.
+- **Isolation.** Inside a branch `_run_artefact_dir` is `artefacts/branches/<id>/` (the existing
+  `{_run_artefact_dir}/…` output templates then land per branch with no flow changes), logs go to
+  `logs/branches/<id>/`, agent workers are `<node>.<id>` with their own registry directory, and
+  agentctl isolation is unchanged. A test gives three fork branches the same output file name.
+- **One driver, real parallelism.** `advance` still holds the single lease and makes every state
+  write; concurrency comes from what it observes — agent workers in tmux and scripts/reducers in
+  detached runners. Each pass steps every branch without blocking and starts new branches only while
+  fewer than `max_parallel` are running. Tests check overlap by timing (fork) and by counting running
+  branches at `--max-wait` (fan-out); the real Claude run shows two workers starting 39 ms apart.
+- **Script nodes became detached everywhere** (top level too), via `script_runner.py`, which writes
+  `script.exit_code` after `script.result.json`. This makes script branches parallel and lets a killed
+  `advance` recover a still-running script instead of reporting it interrupted. All Phase 2 tests pass
+  unchanged in behaviour.
+- **Failure reporting.** A branch situation is persisted on that branch; siblings keep running. Once
+  no branch can make progress (or `--max-wait` elapses), `advance` returns the first branch situation
+  in branch order with `branches` counts and `other_branch_situations`. The join never completes while
+  any branch is awaiting a decision. `retry`/`respawn` take `--branch`; without it the branch is
+  inferred when exactly one matches, otherwise `branch_required` lists the candidates.
+- **Merge.** Fork: branch variables merged by name (disjointness is enforced statically). Fan-out:
+  every region variable becomes a list in branch order. The join's own `summary_var` is the folded
+  summary. Values then flow through normal routing and gates from the join.
+- **Reducer.** Optional; requires `summary_var` (a dict). Runs once per branch, strictly in branch
+  order: branch *k* is folded once it and every earlier branch have arrived — "fires on arrival"
+  while keeping the result independent of arrival timing. Contract: env
+  `FLOWSTATE_REDUCER_SUMMARY_IN` (JSON, `{}` initially), `FLOWSTATE_REDUCER_BRANCH_VARS`,
+  `FLOWSTATE_BRANCH_ID`/`_INDEX`, the branch's `FLOWSTATE_VAR_*`; it must write a JSON object to
+  `FLOWSTATE_REDUCER_SUMMARY_OUT`. Evidence per run in `logs/joins/<join>/fold-NNNN-<branch>-runN/`
+  (command, stdout, stderr, result, exit code, summary in/out, branch variables). Non-zero exit or
+  timeout → `reducer_failed`; missing/non-object output → `reducer_output_invalid`; vanished runner →
+  `reducer_interrupted`. These are top-level situations on the join; `retry <join>` reruns that fold.
+- **Empty fan-out**: `fanout_empty` event, no branches, join completes immediately; region variables
+  are `[]` and `summary_var` is `{}` (the reducer's initial summary; the reducer does not run).
+- **Items**: a `list` variable, or a `path` to a JSON list file. Not a list, unreadable, or more
+  than `max_items` → `fanout_invalid` (abort only), before any branch exists.
+- **Atomic join completion.** `route_and_commit` gained `extra_commit`, so marking the join, the
+  parallel record and the fork node completed happens in the same write that moves the cursor.
+- **Evidence without secrets.** `command.json` for detached runs records only `FLOWSTATE_*`
+  variables; the runner inherits the rest of the environment and nothing else is written to disk.
+
+### Surprise found while building
+
+- The first smoke-branch run returned `branches_running` after one reducer fold: the driver treated a
+  fold that had just *completed* as idle. Fixed by stopping only when no branch is live and the
+  reducer has nothing to do, and re-stepping immediately after fold progress.
+
+### Tests
+
+140 tests, all passing, no tokens (98 from Phases 1–2 plus 42 new in `test_flowstate_parallel.py`).
+Three Phase 2 tests encoded "smoke-branch is invalid" and were updated to the new truth: the loader
+test now checks smoke-branch's fork region; the init "invalid flow" case uses `flow_not_found`, with
+an explicitly broken flow asserting `invalid_flow` and `validate` exit 1.
+
+New coverage:
+- **Static**: valid fork, fan-out and agent-fork flows; smoke-fanout's region; 25 targeted invalid
+  definitions (missing reducer, reducer without summary_var, non-dict summary_var, orphan/foreign/
+  unmatched joins, escaping, nested, overlapping, externally entered and empty branches, variable
+  conflicts, `item`/`_branch_id` outside regions, reserved `item`, conditions on fork edges, one-edge
+  fork, `max_parallel=0`, missing/undeclared/non-list `items`, two template edges, `max_items=0`, a
+  template not reaching its join, unknown fan-out attribute).
+- **Fork/join/reducer** (script branches): parallel execution with merge by name, isolated
+  same-named artefacts and fold order independent of arrival order; one failing branch blocks the
+  join, retry via CLI `--branch` reruns only that branch; join waiting persists and resumes in a new
+  process; reducer failure with full evidence then retry; reducer output that is not an object.
+- **Fan-out** (agent branches via fake harness + tmux): 3 items with `{item}`/`{_branch_id}`/
+  `{_branch_index}` rendering, list merge order, session ids and status rows; 1 item; 0 items;
+  one of five branches failing validation retried alone (others keep one invocation);
+  two failing branches requiring `--branch`; partial completion under `max_parallel`;
+  12 deterministic ids never recreated; items from a JSON file, non-list file and `max_items`;
+  abort killing running branch workers.
+- **Recovery**: SIGKILL of `advance` while an agent branch is still working (Case A: the other two
+  completed; the worker is reconnected; exactly 3 workers and 1 invocation each); SIGKILL while a
+  script branch is running (the detached script finishes; not rerun).
+
+### Smoke tests
+
+- **smoke-branch** (kit flow + new reducer fixture): completed. Folds `fork-worker_a` then
+  `fork-worker_b`; `merge_notes` read both branch notes from `artefacts/branches/fork-worker_*/`;
+  `branch_summary` committed.
+- **smoke-fanout, fake harness**: 3 items (three parallel workers, gate per branch, summary folded in
+  order, report lists alpha/beta/gamma), 1 item, and 0 items (`fanout_empty`, `stamp: []`,
+  `fanout_summary: {}`, report count 0) all completed.
+- **Real Claude**: smoke-test (regression) completed, $0.0212 + $0.0259; smoke-fanout with
+  `item_names=lighthouse,glacier` on haiku completed — both branch workers wrote correct item/branch
+  ids with matching session ids, started 39 ms apart and finished 7.6 s and 8.7 s later (overlapping),
+  the in-branch gate passed, report correct, $0.0106 + $0.0120. Worker init events still show only
+  file tools, 0 skills, no auto-memory.
+
+### Deviations from the plan
+
+- Nested parallel regions are rejected (not in scope for Phase 3; no planned freight step needs them).
+- Script nodes run detached everywhere, not inside the `advance` process.
+- New directories `artefacts/branches/`, `logs/branches/`, `logs/joins/`.
+- `max_parallel` limits running *branches*, not individual processes.
+- `item` is a reserved variable name; `items` may also be a path to a JSON list file.
+
+### Known limitations (not claimed as tested)
+
+- Implemented but not covered by tests: `pause_at` on nodes inside branches; respawn of a branch
+  worker; `worker_stalled`/`worker_timeout` inside branches; a gate failure on the join's outgoing edge
+  followed by `retry <join>`; `null` entries in merged fan-out lists when a branch's internal
+  conditional path skips a producer. Gates inside branches are exercised by the smoke-fanout demo,
+  not by a unit test.
+- Scale is unmeasured beyond 12 branches in tests: every transition rewrites all of `state.yaml`, and
+  each pass reads it once per branch step, so cost grows with branch count (libyaml helps).
+- Every script receives all variables as `FLOWSTATE_VAR_*`; very large list/dict values could exceed
+  OS environment limits.
+- Acyclic graphs only; one `advance` driver per run.

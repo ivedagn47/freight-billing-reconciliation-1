@@ -9,19 +9,21 @@ from .errors import FlowstateError
 from .model import Flow, Node
 from .outputs import prebound, resolve_paths
 from .runtime import node_vars, prompt_footer
+from .scope import TOP, Scope
 from .state import RunStore
 from .templating import render
 
 
-def context(flow: Flow, node: Node, state: dict, store: RunStore, session_id: str) -> dict:
+def context(flow: Flow, node: Node, state: dict, store: RunStore, session_id: str, scope: Scope = TOP) -> dict:
     """Everything needed to launch: output paths, variables, cwd, rendered prompt."""
-    paths = resolve_paths(flow, node, node_vars(state, node.id), store.dir)
-    variables = node_vars(state, node.id, {**prebound(flow, node, paths), "_session_id": session_id})
-    cwd = store.artefacts
+    paths = resolve_paths(flow, node, node_vars(state, node.id, scope=scope), store.dir)
+    variables = node_vars(state, node.id, {**prebound(flow, node, paths), "_session_id": session_id}, scope)
+    base = Path(variables["_run_artefact_dir"])
+    cwd = base
     if node.working_dir:
         cwd = Path(render(node.working_dir, variables, flow.dir, "working_dir"))
         if not cwd.is_absolute():
-            cwd = store.artefacts / cwd
+            cwd = base / cwd
     cwd = cwd.resolve()
     prompt = render(node.prompt_template.read_text(), variables, flow.dir, "prompt_template")
     return {

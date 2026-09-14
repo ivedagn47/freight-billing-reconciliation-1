@@ -6,6 +6,7 @@ listing all of them. Static validation therefore happens before any run exists.
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import jsonschema
@@ -14,11 +15,12 @@ import yaml
 
 from . import conditions, validate
 from .errors import FlowstateError
-from .model import (PHASE3_RUNNERS, VAR_TYPES, Edge, Flow, Node, OutputFile, OutputSchema,
+from .model import (PARALLEL_KINDS, RESERVED_VARS, VAR_TYPES, Edge, Flow, Node, OutputFile, OutputSchema,
                     VarBinding, VariableDecl)
 from .templating import placeholders, resolve_include
 
 PSEUDO_NODES = {"graph", "node", "edge"}
+NODE_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")  # ids appear in worker ids and paths
 COSMETIC = {"label", "color", "fillcolor", "style", "fontname", "fontsize", "fontcolor",
             "tooltip", "penwidth", "xlabel", "width", "height", "group", "comment"}
 GRAPH_ATTRS = COSMETIC | {"description", "rankdir", "bgcolor", "splines", "nodesep", "ranksep",
@@ -32,9 +34,9 @@ ATTRS_BY_KIND = {
                                        "permission_mode", "stall_after", "max_budget_usd",
                                        "harness", "add_dirs"},
     "script": COSMETIC | EXEC_COMMON | {"shape", "runner", "script"},
-    "fork": COSMETIC | {"shape", "runner", "description"},
-    "join": COSMETIC | {"shape", "runner", "description", "reducer_script", "summary_var"},
-    "dynamic_fanout": COSMETIC | {"shape", "runner", "description"},
+    "fork": COSMETIC | {"shape", "runner", "description", "max_parallel"},
+    "dynamic_fanout": COSMETIC | {"shape", "runner", "description", "items", "max_items", "max_parallel"},
+    "join": COSMETIC | {"shape", "runner", "description", "reducer_script", "summary_var", "max_retries"},
 }
 PAUSE_AT = ("never", "optional", "always")
 PERMISSION_MODES = ("acceptEdits", "auto", "manual", "dontAsk", "plan")
@@ -82,7 +84,7 @@ def _kind(node_id: str, attrs: dict, issues: Issues) -> str | None:
         return "start"
     if shape == "Msquare":
         return "done"
-    if runner in PHASE3_RUNNERS:
+    if runner in PARALLEL_KINDS or runner == "join":
         return runner
     if runner == "script":
         return "script"
@@ -93,7 +95,7 @@ def _kind(node_id: str, attrs: dict, issues: Issues) -> str | None:
     else:
         issues.add("unknown_node_type",
                    "node is not start (Mdiamond), done (Msquare), an agent (prompt_template) "
-                   "or a runner=script/fork/join node", node=node_id)
+                   "or a runner=script/fork/join/dynamic_fanout node", node=node_id)
     return None
 
 
@@ -105,6 +107,9 @@ def _flow_file(flow_dir: Path, rel: str, what: str, issues: Issues, **ctx) -> Pa
 
 
 def _build_node(node_id: str, attrs: dict, flow_dir: Path, issues: Issues) -> Node | None:
+    if not NODE_ID_RE.match(node_id):
+        issues.add("invalid_node_id", "node ids must start with a letter and use letters, digits, '_' or '-'",
+                   node=node_id)
     kind = _kind(node_id, attrs, issues)
     if kind is None:
         return None
@@ -115,10 +120,24 @@ def _build_node(node_id: str, attrs: dict, flow_dir: Path, issues: Issues) -> No
                 working_dir=attrs.get("working_dir"), output_schema=attrs.get("output_schema"),
                 model=attrs.get("model"), permission_mode=attrs.get("permission_mode"),
                 harness=attrs.get("harness"))
-    if kind in PHASE3_RUNNERS:
-        issues.add("unsupported_runner", f"runner={kind} is not supported until Phase 3", node=node_id)
-        if kind == "join" and "reducer_script" in attrs:
-            _flow_file(flow_dir, attrs["reducer_script"], "reducer script", issues, node=node_id)
+    if kind in PARALLEL_KINDS:
+        node.max_parallel = _number(node_id, attrs, "max_parallel", issues, int, 1, strict=False)
+    if kind == "dynamic_fanout":
+        node.items = attrs.get("items") or None
+        if not node.items:
+            issues.add("missing_attribute", "dynamic_fanout needs items=<variable holding a JSON list>",
+                       node=node_id)
+        node.max_items = _number(node_id, attrs, "max_items", issues, int, 1, strict=False)
+    if kind == "join":
+        if "reducer_script" in attrs:
+            node.reducer_script = _flow_file(flow_dir, attrs["reducer_script"], "reducer script", issues,
+                                             node=node_id)
+        node.summary_var = attrs.get("summary_var") or None
+        if bool(node.reducer_script) != bool(node.summary_var):
+            issues.add("invalid_join", "reducer_script and summary_var must be given together "
+                       "(the reducer maintains summary_var)", node=node_id)
+        node.max_retries = _number(node_id, attrs, "max_retries", issues, int, 0, strict=False)
+    if kind in PARALLEL_KINDS or kind == "join":
         return node
     if kind == "agent":
         if "prompt_template" not in attrs:
@@ -173,6 +192,8 @@ def _load_yml(yml_path: Path, flow_dir: Path, issues: Issues):
         if not isinstance(spec, dict):
             issues.add("invalid_variable", "variable spec must be a mapping", variable=name)
             continue
+        if name in RESERVED_VARS:
+            issues.add("reserved_variable", f"{name!r} is reserved for the dynamic_fanout item", variable=name)
         for key in sorted(set(spec) - {"type", "required", "default", "description"}):
             issues.add("unsupported_key", f"unknown key {key!r}", variable=name)
         vtype = spec.get("type", "string")
@@ -310,12 +331,12 @@ def check_flow(dot_path: Path, yml_path: Path) -> tuple[Flow | None, Issues]:
     dones = [n.id for n in nodes.values() if n.kind == "done"]
     produced = {v for n in nodes.values() if n.output_schema in schemas
                 for v in schemas[n.output_schema].produced_vars()}
-    produced |= {n.attrs["summary_var"] for n in nodes.values()
-                 if n.kind == "join" and n.attrs.get("summary_var")}
+    produced |= {n.summary_var for n in nodes.values() if n.kind == "join" and n.summary_var}
 
     referenced = [dot_path, yml_path]
     referenced += [f.schema_path for s in schemas.values() for f in s.files]
     referenced += [n.prompt_template for n in nodes.values()] + [n.script for n in nodes.values()]
+    referenced += [n.reducer_script for n in nodes.values()]
     referenced += [g for e in edges for g in e.gates]
     for n in nodes.values():
         if n.prompt_template and n.prompt_template.is_file():

@@ -25,9 +25,14 @@ def test_existing_smoke_test_flow_loads_unchanged():
     assert flow.output_schemas["research_outputs"].files[0].definition == "research-brief"
 
 
-def test_existing_smoke_branch_reports_phase3_and_missing_reducer_only():
-    found, _ = codes(FLOWS_DIR / "smoke-branch" / "smoke-branch.dot")
-    assert found == {"unsupported_runner", "missing_file"}
+def test_existing_smoke_branch_is_valid_with_one_fork_region():
+    d = FLOWS_DIR / "smoke-branch"
+    flow = load_flow(d / "smoke-branch.dot", d / "smoke-branch.flow.yml")
+    region = flow.regions["fork"]
+    assert (region.kind, region.join, region.nodes) == ("fork", "j", {"worker_a", "worker_b"})
+    assert region.branches == {"worker_a": {"worker_a"}, "worker_b": {"worker_b"}}
+    assert region.produced == {"note_a", "note_b"}
+    assert flow.nodes["j"].reducer_script.name == "reduce.sh" and flow.nodes["j"].summary_var == "branch_summary"
 
 
 def test_script_flow_is_valid(tmp_path):

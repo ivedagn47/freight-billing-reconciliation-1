@@ -19,6 +19,8 @@ PREF_DEFAULTS = {
     "max_retries": 2,           # per node, shared by retry and respawn
     "stall_after_s": 600,       # agent transcript silence before worker_stalled
     "script_timeout_s": 600,
+    "max_parallel_branches": 4,  # per fork/dynamic_fanout, unless the node sets max_parallel
+    "max_fanout_items": 500,     # per dynamic_fanout, unless the node sets max_items
 }
 SUPERVISION_LEVELS = ("low", "medium", "high")
 

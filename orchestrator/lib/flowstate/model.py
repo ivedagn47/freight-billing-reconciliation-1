@@ -4,8 +4,11 @@ from typing import Any
 
 BUILTIN_VARS = {"_run_id", "_run_dir", "_run_artefact_dir", "_flow_dir", "_node_id"}
 AGENT_BUILTIN_VARS = {"_session_id"}
+BRANCH_BUILTIN_VARS = {"_branch_id", "_branch_index", "_parallel_node"}
+ITEM_VAR = "item"  # the dynamic_fanout item, available inside its region as {item}
+RESERVED_VARS = {ITEM_VAR}
 VAR_TYPES = {"string", "path", "number", "integer", "boolean", "dict", "list", "any"}
-PHASE3_RUNNERS = {"fork", "join", "dynamic_fanout"}
+PARALLEL_KINDS = {"fork", "dynamic_fanout"}
 
 
 @dataclass
@@ -63,6 +66,11 @@ class Node:
     max_budget_usd: float | None = None
     harness: str | None = None
     add_dirs: list[str] = field(default_factory=list)
+    items: str | None = None  # dynamic_fanout: variable holding the JSON list
+    max_items: int | None = None  # dynamic_fanout
+    max_parallel: int | None = None  # fork / dynamic_fanout
+    reducer_script: Path | None = None  # join
+    summary_var: str | None = None  # join
 
 
 @dataclass
@@ -77,6 +85,18 @@ class Edge:
     @property
     def id(self) -> str:
         return f"{self.source}->{self.target}"
+
+
+@dataclass
+class Region:
+    """The nodes a fork/dynamic_fanout runs once per branch, up to (not including) its join."""
+    parallel: str
+    kind: str  # fork | dynamic_fanout
+    join: str
+    nodes: set[str]
+    branches: dict[str, set[str]]  # branch entry node -> nodes of that branch (fan-out: one template)
+    produced: set[str]  # variables produced inside the region
+    exit_vars: dict[str, set[str]] = field(default_factory=dict)  # entry -> vars set on every path to the join
 
 
 @dataclass
@@ -95,6 +115,7 @@ class Flow:
     done: str
     digest: str
     input_vars: set[str] = field(default_factory=set)
+    regions: dict[str, Region] = field(default_factory=dict)  # keyed by fork/dynamic_fanout node
 
     def out_edges(self, node_id: str) -> list[Edge]:
         return [e for e in self.edges if e.source == node_id]
@@ -107,6 +128,12 @@ class Flow:
         produced = set()
         if node.output_schema and node.output_schema in self.output_schemas:
             produced |= self.output_schemas[node.output_schema].produced_vars()
-        if node.kind == "join" and node.attrs.get("summary_var"):
-            produced.add(node.attrs["summary_var"])
+        if node.kind == "join" and node.summary_var:
+            produced.add(node.summary_var)
         return produced
+
+    def region_of(self, node_id: str) -> Region | None:
+        return next((r for r in self.regions.values() if node_id in r.nodes), None)
+
+    def region_for_join(self, join_id: str) -> Region | None:
+        return next((r for r in self.regions.values() if r.join == join_id), None)

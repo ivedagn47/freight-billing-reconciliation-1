@@ -1,0 +1,51 @@
+# Companion schema for smoke-fanout.dot.
+output_schemas:
+  list_outputs:
+    files:
+      - name: item_list
+        path: "{_run_artefact_dir}/items.json"
+        definition: item-list
+    sets_variables:
+      items: {file: item_list, pointer: /items}
+
+  describe_outputs:
+    files:
+      - name: description
+        path: "{_run_artefact_dir}/description.json"
+        definition: description
+    sets_variables:
+      description: description
+
+  stamp_outputs:
+    files:
+      - name: stamp
+        path: "{_run_artefact_dir}/stamp.json"
+        definition: stamp
+    sets_variables:
+      stamp: stamp
+
+  report_outputs:
+    files:
+      - name: report
+        path: "{_run_artefact_dir}/report.json"
+        definition: report
+    sets_variables:
+      report: report
+
+variables:
+  item_names:
+    type: string
+    default: "alpha,beta,gamma"
+    description: Comma-separated item names; an empty string gives an empty fan-out.
+  items:
+    type: list
+  description:
+    type: path
+    description: Per branch, the description file; after the join, the list of them in branch order.
+  stamp:
+    type: path
+    description: Per branch, the stamp file; after the join, the list of them in branch order.
+  fanout_summary:
+    type: dict
+  report:
+    type: path

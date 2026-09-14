@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Branch Stamp",
+  "type": "object",
+  "required": ["_session_id", "branch_id", "item", "words"],
+  "additionalProperties": false,
+  "properties": {
+    "_session_id": { "type": "string", "minLength": 1 },
+    "branch_id": { "type": "string", "minLength": 1 },
+    "item": { "type": "string", "minLength": 1 },
+    "words": { "type": "integer", "minimum": 1 }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "item", "regex": "(?m)^Item: (.+)$"}},
+        {"capture": {"name": "branch", "regex": "(?m)^Branch: (.+)$"}},
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"text": "describing ${item} in ${branch}"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "item": "${item}",
+          "branch_id": "${branch}",
+          "text": "The item ${item} is handled by branch ${branch}."
+        }}}
+      ],
+      "num_turns": 2,
+      "result": "wrote ${out}"
+    }
+  ]
+}

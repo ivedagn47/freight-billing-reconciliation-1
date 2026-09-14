@@ -62,12 +62,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("retry", parents=[common], help="retry a failed node (same worker conversation)")
     p.add_argument("run")
     p.add_argument("node")
+    p.add_argument("--branch", help="branch id, for a node inside a fork/dynamic_fanout")
     p.add_argument("--feedback")
     p.add_argument("--feedback-file")
 
     p = sub.add_parser("respawn", parents=[common], help="replace a node's worker with a new session")
     p.add_argument("run")
     p.add_argument("node")
+    p.add_argument("--branch", help="branch id, for a node inside a fork/dynamic_fanout")
     p.add_argument("--reason")
 
     p = sub.add_parser("pause", parents=[common], help="stop advancing the run")
@@ -108,9 +110,9 @@ def run(args: argparse.Namespace):
         if args.feedback is not None and args.feedback_file is not None:
             raise FlowstateError("invalid_argument", "give --feedback or --feedback-file, not both")
         feedback = Path(args.feedback_file).read_text() if args.feedback_file else args.feedback
-        return engine.retry(args.run, args.node, feedback, runs_dir=runs_dir)
+        return engine.retry(args.run, args.node, feedback, runs_dir=runs_dir, branch=args.branch)
     if cmd == "respawn":
-        return engine.respawn(args.run, args.node, args.reason, runs_dir=runs_dir)
+        return engine.respawn(args.run, args.node, args.reason, runs_dir=runs_dir, branch=args.branch)
     if cmd == "pause":
         return engine.pause(args.run, args.reason, runs_dir=runs_dir)
     if cmd == "resume":

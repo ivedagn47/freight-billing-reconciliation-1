@@ -1,0 +1,60 @@
+// factory/flows/smoke-fanout/smoke-fanout.dot
+// Dynamic fan-out smoke test:
+//   start -> list_items -> fan -> [describe -> stamp] per item -> collect -> report -> done.
+// Exercises runner=dynamic_fanout ({item}, {_branch_id}, branch-isolated artefacts, a gate inside
+// a branch), runner=join with a reducer, and list merging of branch variables.
+
+digraph smoke_fanout {
+  graph [label="Smoke Fan-out (dynamic_fanout/join)"]
+
+  start      [shape=Mdiamond]
+
+  list_items [shape=box,
+              runner=script,
+              script="scripts/list_items.sh",
+              working_dir="{_run_artefact_dir}",
+              output_schema="list_outputs",
+              description="Turns the comma-separated item_names input into a JSON list."]
+
+  fan        [runner=dynamic_fanout,
+              items="items",
+              max_parallel=3,
+              description="One branch per entry of the items list."]
+
+  describe   [shape=box,
+              prompt_template="prompts/describe.md",
+              working_dir="{_run_artefact_dir}",
+              output_schema="describe_outputs",
+              model="haiku",
+              permission_mode="auto",
+              description="Agent: writes a one-sentence description of its branch's item."]
+
+  stamp      [shape=box,
+              runner=script,
+              script="scripts/stamp.sh",
+              working_dir="{_run_artefact_dir}",
+              output_schema="stamp_outputs",
+              description="Deterministic: records branch id, item and the description's word count."]
+
+  collect    [runner=join,
+              reducer_script="scripts/reduce.sh",
+              summary_var="fanout_summary",
+              description="Waits for every branch; folds each into fanout_summary in branch order."]
+
+  report     [shape=box,
+              runner=script,
+              script="scripts/report.sh",
+              working_dir="{_run_artefact_dir}",
+              output_schema="report_outputs",
+              description="Reads the merged stamp list and the summary; writes one report."]
+
+  done       [shape=Msquare]
+
+  start      -> list_items
+  list_items -> fan
+  fan        -> describe
+  describe   -> stamp [gates="gates/description-matches-item.sh"]
+  stamp      -> collect
+  collect    -> report
+  report     -> done
+}

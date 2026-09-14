@@ -27,14 +27,15 @@ The kit shipped as a **partial scaffold**. Work is proceeding in phases (Option 
 agentctl, then run the reconciliation as a flowstate graph); `IMPLEMENTATION_LOG.md` records each
 phase's decisions and is the source for `DESIGN.md`.
 - `orchestrator/lib/agentctl/` — **implemented (Phase 1)**, see "agentctl" below.
-- `orchestrator/lib/flowstate/` — **core runtime implemented (Phase 2)**, see "flowstate" below.
-  Acyclic graphs with start/done, agent and script nodes, gates and conditions. `runner=fork`,
-  `join` and `dynamic_fanout` are parsed but rejected until Phase 3.
+- `orchestrator/lib/flowstate/` — **implemented through Phase 3**, see "flowstate" below: acyclic
+  graphs with start/done, agent and script nodes, gates, conditions, `fork`, `join` (with reducers)
+  and `dynamic_fanout`. Nested fork/fan-out regions are rejected.
 - `.claude/skills/graph-orchestrator/SKILL.md`, referenced by `PROBLEM.md`, does not exist yet
-  (Phase 4).
-- Kit shell files were committed without the executable bit. Both `bin/` wrappers are now fixed;
-  flowstate runs flow scripts and gates through their `#!` interpreter, so the demo-flow scripts
-  work unchanged. `smoke-branch.dot` references a `scripts/reduce.sh` that does not exist.
+  (Phase 4). No freight-specific flow exists yet (Phase 5+).
+- Kit shell files were committed without the executable bit. Both `bin/` wrappers are fixed; flowstate
+  runs flow scripts, gates and reducers through their `#!` interpreter, so the rest work unchanged.
+- `smoke-branch/scripts/reduce.sh` was missing from the kit and has been added as a minimal fixture.
+  `factory/flows/smoke-fanout/` is a new demo flow for `dynamic_fanout` (the kit had none).
 - `factory/factory-prefs.yml` (gitignored) is created from `factory-prefs-example.yml` on first use.
 
 ## Setup and commands
@@ -50,20 +51,24 @@ Tests (pytest; install with `orchestrator/.venv/bin/pip install -r orchestrator/
 
 ```bash
 (cd orchestrator && .venv/bin/python -m pytest)                                   # all; no tokens spent
-(cd orchestrator && .venv/bin/python -m pytest tests/test_lifecycle.py -k stall)  # single test
+(cd orchestrator && .venv/bin/python -m pytest tests/test_flowstate_parallel.py -k empty)  # single test
 orchestrator/tests/live/smoke_claude_worker.sh        # real Claude worker via tmux (spends cents)
 orchestrator/.venv/bin/python orchestrator/tests/live/probe_isolation.py  # re-verify worker isolation
 ```
 
-Lifecycle and agent-node tests need a working `tmux`. Scratch runs go to `runs/_*/` (gitignored).
+Lifecycle and agent-node tests need a working `tmux`; several flow scripts need `jq`. Scratch runs go
+to `runs/_*/` (gitignored).
 
-Run the demo flow (fake harness = deterministic scripted workers, no tokens; drop the `--harness`
-and `--fake-script` flags to use real Claude workers):
+Run the demo flows (fake harness = deterministic scripted workers, no tokens; drop the `--harness`
+and `--fake-script` flags to use real Claude workers; smoke-branch has no agent nodes):
 
 ```bash
-F=orchestrator/tests/fixtures/fake/smoke-test
+F=orchestrator/tests/fixtures/fake
 orchestrator/bin/flowstate --runs-dir runs/_scratch init smoke-test --var research_topic="tides" \
-  --harness fake --fake-script research=$F/research.json --fake-script summarise=$F/summarise.json
+  --harness fake --fake-script research=$F/smoke-test/research.json --fake-script summarise=$F/smoke-test/summarise.json
+orchestrator/bin/flowstate --runs-dir runs/_scratch init smoke-branch
+orchestrator/bin/flowstate --runs-dir runs/_scratch init smoke-fanout --var item_names="alpha,beta,gamma" \
+  --harness fake --fake-script describe=$F/smoke-fanout/describe.json
 orchestrator/bin/flowstate --runs-dir runs/_scratch advance <run_id>
 ```
 
@@ -93,46 +98,90 @@ orchestrator/bin/flowstate --runs-dir runs/_scratch advance <run_id>
 `flowstate [--runs-dir DIR] {validate,init,advance,retry,respawn,pause,resume,abort,status,events}`;
 JSON on stdout. Situations (including failures) exit 0; command errors exit 1.
 
-- **Loading** (`loader.py`, `validate.py`): pydot parses the DOT (a `graph [...]` statement shows up
-  as a pseudo-node named `graph`; values keep their quotes). Node kind comes from the existing
-  syntax: `Mdiamond` start, `Msquare` done, `prompt_template` agent, `runner=script` script. All
-  issues are collected before any run exists: attribute whitelists per kind, referenced files,
-  schema validity, one start/done, acyclic, reachability, conditions on every branch, and a
-  dataflow pass that every `{var}` / `$FLOWSTATE_VAR_x` is declared *and* set on every path.
+Module map: `loader.py`/`validate.py` (static checks, regions), `engine.py` (init, top-level cursor,
+decisions, status), `execution.py` (one agent/script node inside a `Scope`, as non-blocking steps),
+`parallel.py` (fork/fan-out/join/reducers), `scope.py`, `script_runner.py` (detached script runs),
+`state.py`, `runtime.py` (situations, feedback), `outputs.py`, `gates.py`, `conditions.py`.
+
+- **Loading**: pydot parses the DOT (a `graph [...]` statement shows up as a pseudo-node named
+  `graph`; values keep their quotes). Node kind comes from the existing syntax: `Mdiamond` start,
+  `Msquare` done, `prompt_template` agent, `runner=script|fork|join|dynamic_fanout`. All issues are
+  collected before any run exists: attribute whitelists per kind, referenced files, schema validity,
+  one start/done, acyclic, reachability, conditions on every non-fork branch, region rules (below),
+  and a dataflow pass that every `{var}` / `$FLOWSTATE_VAR_x` is declared *and* set on every path.
 - **Run directory** `runs/<run_id>/`: `state.yaml` (authoritative; only mutated in
   `RunStore.transaction()` under `.state.lock`), `events.jsonl` (append-only, written after the
-  state change), `artefacts/`, `workers/` (the agentctl registry), `logs/` (script output, gate
-  evidence, snapshots of rejected outputs). `advance`/`retry`/`respawn` take a non-blocking
-  `.advance.lock` lease; `pause`/`abort`/`status` do not. The flow digest recorded at init must still
-  match, or `advance` returns `flow_changed`.
-- **Variables**: run inputs via `init --var`, builtins (`_run_id`, `_run_dir`, `_run_artefact_dir`,
-  `_flow_dir`, `_node_id`, `_session_id` for agents), and `sets_variables` (a file name binds the
-  file's path; `{file, pointer}` binds a JSON-pointer value). A node's own path bindings are
-  pre-bound before it runs, so a prompt can say "write to `{research_brief}`"; they are committed
-  only after validation. Missing variables are errors, never empty strings.
-- **Agent nodes** (`agent_node.py`): prompt rendered + a runtime footer stating the assigned session
-  id; spawned through `agentctl.lifecycle` with a fresh UUID. Every JSON output must carry that exact
-  `_session_id`. **Script nodes** run via their `#!` interpreter with `FLOWSTATE_VAR_*` env.
+  state change), `artefacts/` (branch outputs under `artefacts/branches/<branch_id>/`), `workers/`
+  (the agentctl registry), `logs/` (script runs, gate evidence, rejected-output snapshots; branch
+  logs under `logs/branches/<branch_id>/`, reducer runs under `logs/joins/<join>/`). `advance`/
+  `retry`/`respawn` take a non-blocking `.advance.lock` lease; `pause`/`abort`/`status` do not.
+  The flow digest recorded at init must still match, or `advance` returns `flow_changed`.
+- **Variables**: run inputs via `init --var` (lists/dicts as JSON), builtins (`_run_id`, `_run_dir`,
+  `_run_artefact_dir`, `_flow_dir`, `_node_id`, `_session_id` for agents; inside regions also
+  `_branch_id`, `_branch_index`, `_parallel_node`, and `item` for dynamic_fanout), and
+  `sets_variables` (a file name binds the file's path; `{file, pointer}` binds a JSON-pointer value).
+  A node's own path bindings are pre-bound before it runs, so a prompt can say "write to
+  `{research_brief}`"; they are committed only after validation. Missing variables are errors.
+- **Agent nodes**: prompt rendered + a runtime footer stating the assigned session id; spawned
+  through `agentctl.lifecycle` with a fresh UUID. Every JSON output must carry that exact
+  `_session_id`. **Script nodes** (and reducers) are launched detached via `script_runner.py`
+  (runs the `#!` interpreter with `FLOWSTATE_VAR_*`, writes `<stem>.exit_code` last), so they run in
+  parallel and survive `advance` being killed. `command.json` records only `FLOWSTATE_*` env.
 - **Advancing a node**: outputs exist → JSON Schema valid → `_session_id` (agents) → bindings →
-  conditions pick exactly one edge → that edge's gates exit 0 → one atomic commit (variables, node
-  completed, cursor moves). Any failure becomes a persisted situation and nothing is committed.
+  conditions pick exactly one edge → that edge's gates exit 0 → one atomic commit. Any failure is a
+  persisted situation and nothing is committed.
 - **Situations** (`runtime.py`): persisted until acted on — `validation_failed`, `gate_failed`,
   `worker_failed`, `script_failed`, `node_interrupted`, `render_failed`, `condition_error`,
-  `no_route`, `ambiguous_route`, `retries_exhausted`; transient — `worker_running` (`--max-wait`),
-  `worker_stalled`, `worker_timeout`, `busy`, `flow_changed`; run-level — `paused`, `aborted`,
-  `completed`. Each lists its `options`.
+  `no_route`, `ambiguous_route`, `fanout_invalid`, `reducer_failed`, `reducer_output_invalid`,
+  `reducer_interrupted`, `retries_exhausted`; transient — `worker_running` / `script_running` /
+  `branches_running` (`--max-wait`), `worker_stalled`, `worker_timeout`, `busy`, `flow_changed`;
+  run-level — `paused`, `aborted`, `completed`. Branch situations add `branch_id`, `branch_index`,
+  `parallel_node`, `item`, and `branches` counts.
 - **Decisions**: `retry` sends structured feedback into the same worker conversation (script nodes
-  rerun); `respawn` kills the old worker and starts `<node>.respawn-N` with a new session, keeping old
-  evidence. Both consume the node's `max_retries` budget (default from prefs). `pause` stops
-  advancement without killing workers; `abort` kills them. `pause_at=optional` pauses only when
-  supervision is `high`.
-- **Recovery**: an agent attempt is recorded (`launch: pending`) before agentctl is called, so a new
-  `advance` process reconnects to or finishes launching that worker instead of spawning twice.
-  Completed nodes never rerun; an interrupted script is reported, not silently rerun.
+  rerun; `retry <join>` reruns the failed reducer fold); `respawn` starts `<worker>.respawn-N` with a
+  new session. For nodes inside a region pass `--branch <id>` (inferred when exactly one branch
+  matches). Both consume the node's `max_retries` budget. `pause` stops advancement without killing
+  workers; `abort` kills agent workers, detached scripts and reducers. `pause_at=optional` pauses
+  only when supervision is `high`.
+- **Recovery**: an agent attempt is recorded (`launch: pending`) before agentctl is called; detached
+  scripts are observed through their exit marker. A new `advance` process reconnects to running
+  workers/scripts instead of starting them again. Completed nodes and branches never rerun; a
+  runner that vanished without a result is `node_interrupted` / `reducer_interrupted`.
 
-The runtime deliberately does not decide how to respond to situations — that judgement belongs to an
-**orchestrator agent** driving the CLI (per `brief.md` §5), the role of the graph-orchestrator
-skill (Phase 4).
+### Parallel regions (fork, join, dynamic_fanout)
+
+- **Regions (static)**: each `fork`/`dynamic_fanout` owns the nodes between it and exactly one
+  `join`. Branches cannot leave the region, be entered from outside it, share nodes (fork), or contain
+  another fork/fan-out. Edges leaving the parallel node carry no conditions or gates. Fork branches
+  must produce disjoint variables; region variables cannot also be produced outside the region.
+  `dynamic_fanout` has exactly one outgoing edge (the template) and needs `items=<variable>` (a
+  `list`, or a `path` to a JSON list file); optional `max_items` (default prefs `max_fanout_items`,
+  500) and `max_parallel` (default prefs `max_parallel_branches`, 4). `join` takes optional
+  `reducer_script` + `summary_var` (a `dict` variable) — both or neither.
+- **Branches**: created once, in one write, when the cursor reaches the parallel node. Fork: one per
+  outgoing edge, ids `<fork>-<entry>` in sorted entry order. Fan-out: one per item, ids
+  `<fanout>-0000`, `-0001`, … by list position (width grows past 10 000). Each branch persists its
+  item and a context in which `_run_artefact_dir` is `artefacts/branches/<branch_id>/`; agent worker
+  ids are `<node>.<branch_id>`.
+- **Execution**: one `advance` process steps every branch without blocking; at most `max_parallel`
+  branches are running at once. Agent workers (tmux) and scripts (detached) execute concurrently.
+  Sibling branches keep running when one fails; `advance` returns the first branch situation in
+  branch order once no other branch can make progress (or at `--max-wait`).
+- **Join**: completes only when every branch has reached it and every fold is done. Merge: fork
+  branch variables by name; fan-out region variables become lists in branch order. The reducer runs
+  once per branch, strictly in branch order (branch *k* is folded as soon as it and all earlier
+  branches have arrived), reading `FLOWSTATE_REDUCER_SUMMARY_IN` (`{}` initially),
+  `FLOWSTATE_REDUCER_BRANCH_VARS`, the branch's `FLOWSTATE_VAR_*` and `FLOWSTATE_BRANCH_ID`, and writing
+  a JSON object to `FLOWSTATE_REDUCER_SUMMARY_OUT`; the result becomes `summary_var`. Completing the
+  join, the parallel record and the cursor move is one write.
+- **Empty fan-out**: no branches; the join completes immediately with region variables `[]` and
+  `summary_var` `{}`.
+- **State** under `state.parallel.<parallel_node>`: `kind`, `join`, `status` (running | merged |
+  completed), `items`, `max_parallel`, `branch_order`, `branches.<id>` (`index`, `entry`, `status`
+  pending | running | awaiting_decision | completed, `cursor`, `context`, `variables`, `nodes` with
+  Phase 2 node records, `situation`), and `join_state` (`status`, `folded`, `summary`,
+  `reducer_runs`, `merged_variables`). Top-level `nodes.<region node>` is only a
+  `status: in_branches` marker. `flowstate status` summarises all of this under `parallel`.
 
 ## Flow file architecture (DOT + flow.yml)
 
@@ -143,27 +192,26 @@ A flow is two files per directory, `factory/flows/<name>/<name>.dot` and
 - **`.dot`** (Graphviz digraph) declares nodes and edges. Node attributes select a runner and its
   config: agent nodes (`shape=box` with `prompt_template`, `output_schema`, `model`,
   `permission_mode`, `pause_at`, `working_dir`) get a fresh worker session per node with a rendered
-  prompt; `runner=script` nodes run a deterministic shell script instead of an LLM; `runner=fork`,
-  `runner=join` (with `reducer_script`, `summary_var`) handle parallel fan-out/fan-in. Edges may
-  carry `gates` (comma-separated scripts that must `exit 0`) and a `condition`
-  (`count > 0 and status == "ok"`; operators `== != < <= > >=`, `and`/`or`, no parentheses).
+  prompt; `runner=script` nodes run a deterministic script instead of an LLM; `runner=fork`,
+  `runner=dynamic_fanout` (`items`, `max_items`, `max_parallel`) and `runner=join` (`reducer_script`,
+  `summary_var`) handle parallel fan-out/fan-in. Edges may carry `gates` (comma-separated scripts that
+  must `exit 0`) and a `condition` (`count > 0 and status == "ok"`; operators `== != < <= > >=`,
+  `and`/`or`, no parentheses).
 - **`.flow.yml`** declares `output_schemas` (mapping a node's `output_schema` name to the files it
   must produce, each validated against a JSON Schema in `definitions/`, and which flow `variables`
   those files populate) and the typed `variables` themselves (`string`, `path`, `number`,
-  `integer`, `boolean`, `dict`, `list`, `any`; optional `default`, `required`).
+  `integer`, `boolean`, `dict`, `list`, `any`; optional `default`, `required`). `item` is reserved.
 - Variables populated by one node are exposed to scripts/gates downstream as
-  `FLOWSTATE_VAR_<name>` environment variables (see `gates/brief-exists.sh`,
-  `scripts/worker_a.sh`).
-- `working_dir="{_run_artefact_dir}"` — the per-run artefact directory is a built-in templated
-  variable; node outputs generally land there.
+  `FLOWSTATE_VAR_<name>` environment variables (lists/dicts as JSON).
+- `working_dir="{_run_artefact_dir}"` — the per-run (or per-branch) artefact directory.
 
-To see the machinery, run the two demo flows:
+Demo flows:
 - `factory/flows/smoke-test/` — linear agent-node flow (`research` → `summarise`) with a
-  schema-validated output at each step and a shell **gate** (`gates/brief-exists.sh`) on the edge
-  between them, reading `FLOWSTATE_VAR_research_brief`. Runs end to end today.
-- `factory/flows/smoke-branch/` — `fork` → parallel `worker_a`/`worker_b` (script-runner nodes,
-  not agent nodes) → `join` (with a reducer script maintaining a summary variable) → `merge_notes`.
-  Needs Phase 3.
+  schema-validated output at each step and a gate (`gates/brief-exists.sh`) between them.
+- `factory/flows/smoke-branch/` — `fork` → `worker_a`/`worker_b` (script nodes) → `join` with a
+  reducer maintaining `branch_summary` → `merge_notes` reading both branches' notes.
+- `factory/flows/smoke-fanout/` — `list_items` → `dynamic_fanout` → per item `describe` (agent) →
+  gate → `stamp` (script) → `join` with a reducer → `report` over the merged list.
 
 ## Reconciliation data
 
