@@ -1,0 +1,52 @@
+# Companion schema for stage-memos.dot (Phase 6 isolation flow).
+output_schemas:
+  memo_plan_outputs:
+    files:
+      - name: plan
+        path: "{_run_artefact_dir}/memo-work/batches.json"
+        definition: memo-batches
+    sets_variables:
+      memo_plan: plan
+      memo_batches: {file: plan, pointer: /batches}
+
+  write_memos_outputs:
+    files:
+      - name: drafts
+        path: "{_run_artefact_dir}/memo-drafts.json"
+        definition: memo-drafts
+    sets_variables:
+      memo_draft: drafts
+
+  render_outputs:
+    files:
+      - name: index
+        path: "{_run_artefact_dir}/memo-work/index.json"
+        definition: memos-index
+    sets_variables:
+      memos_index: index
+
+variables:
+  priced:
+    type: path
+    description: Output of `freight price` (absolute path).
+  report:
+    type: path
+    description: Output of `freight assemble` for the same priced bundle (absolute path).
+  clauses_dir:
+    type: path
+    description: Directory of <carrier>.json clause indexes (absolute path).
+  carriers_config:
+    type: path
+    description: Carrier master config, for carrier names (absolute path).
+  memo_batch_size:
+    type: integer
+    default: 8
+  memo_plan:
+    type: path
+  memo_batches:
+    type: list
+  memo_draft:
+    type: path
+    description: Per branch, the batch's drafts; after the join, the list of them in branch order.
+  memos_index:
+    type: path

@@ -1,0 +1,46 @@
+# Companion schema for stage-adjudicate.dot (Phase 6 isolation flow).
+output_schemas:
+  adjudication_plan_outputs:
+    files:
+      - name: plan
+        path: "{_run_artefact_dir}/adjudication/batches.json"
+        definition: adjudication-batches
+    sets_variables:
+      adjudication_plan: plan
+      adjudication_batches: {file: plan, pointer: /batches}
+
+  adjudicate_outputs:
+    files:
+      - name: decisions
+        path: "{_run_artefact_dir}/adjudications.json"
+        definition: adjudications
+    sets_variables:
+      adjudication: decisions
+
+  merge_outputs:
+    files:
+      - name: merged
+        path: "{_run_artefact_dir}/adjudication/merged.json"
+        definition: adjudications-merged
+    sets_variables:
+      adjudications: merged
+
+variables:
+  priced:
+    type: path
+    description: Output of `freight price` ({priced, planned}) (absolute path).
+  clauses_dir:
+    type: path
+    description: Directory of <carrier>.json clause indexes (absolute path).
+  adjudication_batch_size:
+    type: integer
+    default: 10
+  adjudication_plan:
+    type: path
+  adjudication_batches:
+    type: list
+  adjudication:
+    type: path
+    description: Per branch, the batch's decisions; after the join, the list of them in branch order.
+  adjudications:
+    type: path

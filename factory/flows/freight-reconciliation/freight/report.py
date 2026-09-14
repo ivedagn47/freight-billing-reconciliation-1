@@ -98,7 +98,9 @@ def assemble(priced: dict, planned: dict, policy: dict, adjudications: dict | No
         if decision["disposition"] is None:
             adj = adjudications[line["item_id"]]
             disposition, justification = adj["disposition"], adj["justification"].strip()
-            clause = adj.get("contract_clause", clause)
+            cited = clause_ref(line["contract_file"], list(adj.get("clauses") or []))
+            if cited:
+                justification = f"{justification} (cited: {cited})"
         else:
             disposition, justification = decision["disposition"], deterministic_justification(line, decision, policy)
         row = {"invoice": line["invoice"], "consignment_ref": line["consignment_ref"], "shipment_id": line["shipment_id"],

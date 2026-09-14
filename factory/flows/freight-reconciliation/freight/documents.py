@@ -43,6 +43,15 @@ def load_carriers(path: Path) -> dict:
     return carriers
 
 
+def invoice_charge_codes(carriers: dict, carrier: str) -> list[str]:
+    """The charge codes this carrier's invoices can carry (what its formats' parsers emit), without the
+    credit and unrecognised-label codes, which no contract component prices."""
+    codes: set[str] = set()
+    for fmt in carriers[carrier]["invoice_formats"]:
+        codes |= set(parsers.FORMATS[fmt].CHARGE_CODES)
+    return sorted(codes - {"credit", "other"})
+
+
 def carrier_for_format(carriers: dict, fmt: str) -> str:
     for cid, spec in carriers.items():
         if fmt in spec["invoice_formats"]:

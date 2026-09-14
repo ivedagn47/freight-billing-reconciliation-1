@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Contract extraction plan (script output)",
+  "type": "object",
+  "required": [
+    "format_version",
+    "prompt_version",
+    "use_cache",
+    "cache_dir",
+    "clauses_dir",
+    "vocabulary",
+    "carriers",
+    "extraction_items"
+  ],
+  "properties": {
+    "format_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prompt_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "use_cache": {
+      "type": "boolean"
+    },
+    "clauses_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vocabulary": {
+      "type": "object"
+    },
+    "carriers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract",
+          "contract_sha256",
+          "clause_index",
+          "cache_key",
+          "cache",
+          "invoice_charge_codes"
+        ],
+        "properties": {
+          "cache": {
+            "enum": [
+              "hit",
+              "miss",
+              "invalid",
+              "disabled"
+            ]
+          }
+        }
+      }
+    },
+    "extraction_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "carrier",
+          "copy",
+          "round",
+          "contract",
+          "clause_index",
+          "vocabulary",
+          "inputs",
+          "invoice_charge_codes"
+        ],
+        "properties": {
+          "carrier": {
+            "type": "string",
+            "minLength": 1
+          },
+          "copy": {
+            "enum": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ]
+          },
+          "round": {
+            "enum": [
+              1,
+              2
+            ]
+          },
+          "contract": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clause_index": {
+            "type": "string",
+            "minLength": 1
+          },
+          "vocabulary": {
+            "type": "object",
+            "required": [
+              "service_level",
+              "special_handling"
+            ]
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "invoice_charge_codes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

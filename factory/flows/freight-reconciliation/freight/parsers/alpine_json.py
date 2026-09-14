@@ -9,6 +9,7 @@ from ..money import fmt, round_inr, to_decimal
 from .base import ParseError, check, new_document, new_line
 
 NAME = "alpine-json"
+CHARGE_CODES = frozenset({"freight", "handling"})  # every code this parser can emit
 PERIOD = re.compile(r"^\d{4}-\d{2}$")
 REQUIRED = ("invoice_no", "billing_period", "lines", "invoice_total")
 LINE_REQUIRED = ("consignment_no", "line_amount")

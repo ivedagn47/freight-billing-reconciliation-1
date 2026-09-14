@@ -27,6 +27,7 @@ LINE_FLAG_CODES = {
     "CONTRACT_GAP", "OUTSIDE_RATE_CARD", "UNRECOGNIZED_CHARGE", "CREDIT_NOTE_UNMATCHED", "CREDIT_NOTE_UNDETERMINED",
     "DUPLICATE_BILLING", "UNCONTRACTED_CHARGE", "SERVICE_NOT_OFFERED", "NOT_DELIVERED", "COMPONENT_ARITHMETIC",
     "CREDIT_NOTE_OFFSET", "CREDIT_NOTE", "CHARGE_NOT_APPLICABLE", "ATTRIBUTE_MISMATCH", "UNDERBILLED",
+    "CHARGE_UNVERIFIABLE", "CONDITION_UNVERIFIABLE",
 }
 FINDING_CODES = {"ADJUSTMENT_MISMATCH", "ADJUSTMENT_UNDETERMINED", "INVOICE_TOTAL_MISMATCH"}
 
@@ -57,16 +58,31 @@ def item_id(doc_id: str, line_no: int) -> str:
 
 # ---------------------------------------------------------------- rate spec evaluation
 
-def _condition(cond: dict, shipment: dict) -> bool:
+def _condition(cond: dict, shipment: dict) -> bool | None:
+    """True or False, or None when the answer depends on a fact the shipment record does not hold
+    (three-valued: `all` is False if any part is False, `any` is True if any part is True)."""
     if "service_level" in cond:
         return shipment.get("service_level") == cond["service_level"]
     if "special_handling_includes" in cond:
         return cond["special_handling_includes"] in (shipment.get("special_handling") or [])
+    if "unrecorded" in cond:
+        return None
     if "all" in cond:
-        return all(_condition(c, shipment) for c in cond["all"])
+        values = [_condition(c, shipment) for c in cond["all"]]
+        return False if any(v is False for v in values) else (None if None in values else True)
     if "any" in cond:
-        return any(_condition(c, shipment) for c in cond["any"])
-    return not _condition(cond["not"], shipment)
+        values = [_condition(c, shipment) for c in cond["any"]]
+        return True if any(v is True for v in values) else (None if None in values else False)
+    value = _condition(cond["not"], shipment)
+    return None if value is None else not value
+
+
+def _unrecorded(cond: dict) -> list[str]:
+    if "unrecorded" in cond:
+        return [cond["unrecorded"]]
+    if "not" in cond:
+        return _unrecorded(cond["not"])
+    return [d for sub in cond.get("all") or cond.get("any") or [] for d in _unrecorded(sub)]
 
 
 def _value(ref: dict, shipment: dict, quantities: dict) -> Decimal:
@@ -110,11 +126,16 @@ def evaluate(spec: dict, shipment: dict) -> dict:
             quantities[q["name"]] = max(values) if q["op"] == "max" else min(values)
 
         amounts: dict[str, Decimal | None] = {}
+        unverifiable: set[str] = set()
         for c in spec["components"]:
-            applies = "when" not in c or _condition(c["when"], shipment)
-            row = {"name": c["name"], "kind": c["kind"], "applied": applies, "amount": None, "clauses": c["clauses"]}
+            applies = True if "when" not in c else _condition(c["when"], shipment)
+            row = {"name": c["name"], "kind": c["kind"], "applied": applies is True, "amount": None,
+                   "clauses": c["clauses"]}
+            if applies is None:  # excluded from the amount: the records cannot establish it applies
+                row["unverifiable"] = _unrecorded(c["when"])
+                unverifiable.add(c["name"])
             rows.append(row)
-            if not applies:
+            if applies is not True:
                 amounts[c["name"]] = Decimal(0)
                 continue
             calc, amount = c["calc"], None
@@ -131,8 +152,13 @@ def evaluate(spec: dict, shipment: dict) -> dict:
                 else:
                     flags.append(_gap(c, selector))
             else:
+                depends = [name for name in calc["of"] if name in unverifiable]
                 parts = [amounts[name] for name in calc["of"]]
-                if all(p is not None for p in parts):
+                if depends:
+                    flags.append(flag("CONDITION_UNVERIFIABLE", f"{c['name']} is a percentage of {', '.join(depends)}, "
+                                      "whose condition depends on facts the shipment record does not hold",
+                                      c["clauses"], component=c["name"], depends_on=depends))
+                elif all(p is not None for p in parts):
                     amount = sum(parts, Decimal(0)) * to_decimal(calc["percent"]) / Decimal(100)
             amounts[c["name"]] = amount
             row["amount"] = None if amount is None else str(amount)
@@ -174,6 +200,7 @@ def first_billing(docs: list[dict]) -> dict[tuple[str, str], str]:
 
 def _charge_flags(line: dict, spec: dict, components: list[dict]) -> tuple[list[dict], list[dict]]:
     applied = {r["name"]: r["applied"] for r in components}
+    unverifiable = {r["name"]: r["unverifiable"] for r in components if r.get("unverifiable")}
     billed, flags = [], []
     for charge in line["charges"]:
         matched = [c for c in spec["components"] if charge["code"] in c["charge_codes"]]
@@ -186,6 +213,14 @@ def _charge_flags(line: dict, spec: dict, components: list[dict]) -> tuple[list[
             flags.append(flag("UNCONTRACTED_CHARGE", f"{charge['label']} ({charge['code']}) is not a charge the "
                               "contract provides for", label=charge["label"], code=charge["code"],
                               amount=charge["amount"]))
+        elif components and not any(applied.get(c["name"]) for c in matched) and \
+                any(c["name"] in unverifiable for c in matched):
+            pending = [c for c in matched if c["name"] in unverifiable]
+            facts = sorted({d for c in pending for d in unverifiable[c["name"]]})
+            flags.append(flag("CHARGE_UNVERIFIABLE", f"{charge['label']} is billed, but whether the contract allows it "
+                              f"depends on facts the shipment record does not hold: {'; '.join(facts)}",
+                              sorted({x for c in pending for x in c["clauses"]}), label=charge["label"],
+                              amount=charge["amount"], components=[c["name"] for c in pending], unrecorded=facts))
         elif components and not any(applied.get(c["name"]) for c in matched):
             flags.append(flag("CHARGE_NOT_APPLICABLE", f"{charge['label']} is billed but the contract condition for it "
                               "is not met by the shipment record", sorted({x for c in matched for x in c["clauses"]}),

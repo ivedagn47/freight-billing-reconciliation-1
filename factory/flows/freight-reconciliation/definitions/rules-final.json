@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Adopted rate specs (script output)",
+  "type": "object",
+  "required": [
+    "specs",
+    "sources",
+    "round2",
+    "cache_writes",
+    "blocking"
+  ],
+  "properties": {
+    "specs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sources": {
+      "type": "object"
+    },
+    "round2": {
+      "type": "object"
+    },
+    "cache_writes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blocking": {
+      "type": "object",
+      "maxProperties": 0
+    }
+  }
+}

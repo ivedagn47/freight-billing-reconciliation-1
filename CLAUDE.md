@@ -32,9 +32,10 @@ phase's decisions and is the source for `DESIGN.md`.
   and `dynamic_fanout`. Nested fork/fan-out regions are rejected.
 - `.claude/skills/graph-orchestrator/` — **implemented (Phase 4)**, see "graph-orchestrator skill"
   below.
-- `factory/flows/freight-reconciliation/` — **deterministic code layer implemented (Phase 5)**, see
-  "Freight code layer" below. No DOT/flow.yml, agent prompts or reconcile skill yet (Phases 6–7), and
-  no real rate specs: those are produced by agent nodes in Phase 6.
+- `factory/flows/freight-reconciliation/` — **deterministic code layer (Phase 5) and agent nodes
+  (Phase 6)**, see "Freight code layer" and "Freight agent nodes" below. The agent nodes are exercised
+  through isolation flows in `tests/stages/`; the reconciliation DOT/flow.yml and the reconcile skill are
+  Phase 7.
 - Kit shell files were committed without the executable bit. Both `bin/` wrappers are fixed; flowstate
   runs flow scripts, gates and reducers through their `#!` interpreter, so the rest work unchanged.
 - `smoke-branch/scripts/reduce.sh` was missing from the kit and has been added as a minimal fixture.
@@ -63,6 +64,11 @@ SCENARIO=pause orchestrator/tests/live/orchestrate_drill.sh
 # freight code layer (separate suite, same venv)
 (cd factory/flows/freight-reconciliation && ../../../orchestrator/.venv/bin/python -m pytest)
 PYTHONPATH=factory/flows/freight-reconciliation orchestrator/.venv/bin/python -m freight --help
+
+# Phase 6 agent nodes in isolation with real Claude workers (spends tokens; output under runs/_phase6-live/)
+orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/run_stage.py rules       # Opus x6, real contracts
+orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/run_stage.py adjudicate  # Sonnet, synthetic packets
+orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/run_stage.py memos       # Sonnet, synthetic report
 ```
 
 Lifecycle and agent-node tests need a working `tmux`; several flow scripts need `jq`. Scratch runs go
@@ -228,8 +234,9 @@ means and picks the next Flowstate command. It contains no domain logic.
 
 `factory/flows/freight-reconciliation/`: `freight/` (Python package), `config/carriers.yml` (carrier →
 contract, consignment prefix, invoice formats), `config/policy.yml` (flag → disposition effects),
-`definitions/rate-spec.json`, `tests/`. CLI for script nodes: `python -m freight {discover, clauses,
-check-spec, price, assemble}` (JSON out; errors exit 1).
+`definitions/` (the rate spec and every node output schema), `prompts/`, `gates/`, `scripts/`, `tests/`. CLI
+for script nodes and gates: `python -m freight --help` (JSON on stdout; errors exit 1 with at most 10
+readable problem lines on stderr, which is what a failed gate's feedback shows the worker).
 
 - **Money** (`money.py`): Decimal everywhere, decimal strings in JSON, half-up to the paisa once per
   line total. Tolerance lives in policy.yml.
@@ -245,12 +252,14 @@ check-spec, price, assemble}` (JSON out; errors exit 1).
 - **Rate spec** (`ratespec.py`, `definitions/rate-spec.json`): pricing rules as data — quantities
   (`max`/`min`), components (`flat`, `per_unit`, `banded_rate`, `percent_of` earlier components) with
   shipment conditions and the charge codes they account for, allowed service levels, invoice
-  discounts gated on consignments in the billing month, term, gaps. Bands keep the contract's
-  inclusive/exclusive ends; values in no band are never snapped. `pricing_view()` strips citations
-  and wording for comparing two independent extractions.
+  discounts gated on consignments in the billing month, term, gaps, `non_pricing` clauses and
+  `unrepresentable` terms (any entry stops the run). Conditions are three-valued: `{"unrecorded": ...}`
+  names a fact the shipment records do not hold. Bands keep the contract's inclusive/exclusive ends;
+  values in no band are never snapped.
 - **Pricing** (`pricing.py`): prices from `shipments.json` + spec only; flags: `NO_SHIPMENT_MATCH`,
   `SHIPMENT_AMBIGUOUS`, `SHIPMENT_DATA_MISSING`, `CARRIER_MISMATCH`, `OUTSIDE_TERM`, `CONTRACT_GAP`,
   `OUTSIDE_RATE_CARD`, `UNRECOGNIZED_CHARGE`, `UNCONTRACTED_CHARGE`, `CHARGE_NOT_APPLICABLE`,
+  `CHARGE_UNVERIFIABLE` / `CONDITION_UNVERIFIABLE` (only an unrecorded fact could settle it; escalated),
   `DUPLICATE_BILLING` (earliest billing across all periods wins; later ones expect 0),
   `SERVICE_NOT_OFFERED`, `NOT_DELIVERED`, `COMPONENT_ARITHMETIC`, `ATTRIBUTE_MISMATCH`, `UNDERBILLED`,
   credit-note flags. Credit line expected = original expected − original billed − earlier credits;
@@ -260,11 +269,44 @@ check-spec, price, assemble}` (JSON out; errors exit 1).
   tolerance, else accept); a `judgement` flag turns the result into `[outcome, escalate]` for
   adjudication. Unknown flags or missing policy entries fail closed.
 - **Report** (`report.py`): dispositions only from policy or from adjudications restricted to the
-  offered options; deterministic justifications with clause citations; `verify()` enforces
+  offered options (an adjudication's clause ids are appended to its justification; `contract_clause`
+  stays the clauses the expected amount comes from); deterministic justifications with clause citations; `verify()` enforces
   `report.schema.json`, one row per in-scope line, delta = billed − expected, recomputed totals,
   no disputed line offset by a credit note (each rupee counted once), and policy-allowed dispositions.
 - **Tests**: real data only for structure and the scope rule; every pricing expectation uses the
   synthetic `acme` carrier in `tests/synthetic.py`.
+
+## Freight agent nodes (Phase 6)
+
+Three agent nodes, each surrounded by deterministic script nodes and gated per branch. Gates and scripts are
+thin bash wrappers around `python -m freight` with `PYTHONPATH=$FLOWSTATE_VAR__flow_dir`.
+
+- **Contract extraction** (`prompts/extract-rules.md` including `prompts/reference/rate-spec-guide.md` and
+  the schema; Opus). `rules-plan` builds clause indexes, the shipment vocabulary and each carrier's
+  `invoice_charge_codes` (what its parsers declare in `CHARGE_CODES`), looks up the cache, and assigns two
+  independent copies (`a`, `b`) per carrier without a valid cached spec. Each copy's branch is gated by
+  `gates/rate-spec-traced.sh` (`tracing.py`: identity, clauses exist, every priced number appears in a cited
+  clause, every clause accounted for, vocabulary) and `gates/worker-inputs-only.sh` (`audit.py`: the worker's
+  transcript shows it read only its assigned inputs and wrote only inside its branch). `rules-agree` compares
+  the copies by behaviour (`agreement.py`: probe shipments at and between every threshold, per charge code the
+  carrier bills): agreed → adopted; disagreed → one fresh round (`c`, `d`) that must agree copy against copy
+  (`rules-final`); invalid, unrepresentable or still disagreeing → the script exits 1 and the run stops for a
+  human. Cache entry: `<cache_dir>/<carrier>/<sha256(contract sha | format version | prompt version)>.json`,
+  re-traced on every use and reused only for the same shipment vocabulary and invoice codes.
+- **Adjudication** (`prompts/adjudicate.md`; Sonnet). `adjudication-plan` batches the items policy left open
+  into packets (computed facts, the two options, full clause text). `gates/adjudications-grounded.sh`
+  (`adjudication.check`): each item decided once, an offered disposition, real clause ids, a justification
+  of at most 600 characters whose figures all come from the packet (`grounding.py`). `merge-adjudications`
+  re-checks every batch and requires every open item decided exactly once. Decisions have no amount fields.
+- **Memos** (`prompts/write-memos.md` including `prompts/reference/memo-style.md`; Sonnet). `memo-plan` makes
+  one facts entry per non-accept report row; `gates/memos-grounded.sh` (`memos.check`): coverage, field
+  lengths, grounded figures; `render-memos` writes `memos/<memo_id>.md` with a facts table generated from the
+  report, and refuses a directory holding anything else.
+- **Isolation flows** (`tests/stages/stage-{rules,adjudicate,memos}.{dot,flow.yml}`): `tests/stage_flows.py`
+  copies the flow's assets next to a stage graph, so the real prompts, schemas, gates and scripts run through
+  flowstate. `tests/test_phase6_stage_runs.py` drives them with fake workers (gates pass; gate failure →
+  retry; disagreement → second round; cache reuse); `tests/live/run_stage.py` runs them with real workers and
+  a minimal scripted supervisor (not the graph-orchestrator skill).
 
 ## Flow file architecture (DOT + flow.yml)
 

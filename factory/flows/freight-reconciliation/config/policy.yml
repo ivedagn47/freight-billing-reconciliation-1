@@ -21,6 +21,8 @@ line_flags:
   UNRECOGNIZED_CHARGE: escalate        # the parser could not classify a charge
   CREDIT_NOTE_UNMATCHED: escalate
   CREDIT_NOTE_UNDETERMINED: escalate
+  CHARGE_UNVERIFIABLE: escalate        # a billed charge only a fact missing from the shipment record could justify
+  CONDITION_UNVERIFIABLE: escalate     # the amount depends on a component whose condition the records cannot settle
   CREDIT_NOTE_OFFSET: offset
   DUPLICATE_BILLING: dispute           # expected amount is zero for every billing after the first
   UNCONTRACTED_CHARGE: dispute         # expected amount excludes the charge

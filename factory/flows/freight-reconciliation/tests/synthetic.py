@@ -28,7 +28,36 @@ ACME_SPEC = {
                              "when": {"consignments_in_billing_month": {"gt": 2}},
                              "calc": {"op": "percent_of_invoice_expected", "percent": 5}}],
     "gaps": [{"description": "exactly 100 kg is in neither band", "clauses": ["2"]}],
+    "non_pricing": [{"clauses": ["6"], "reason": "payment terms"}],
+    "unrepresentable": [],
 }
+
+# The invented contract ACME_SPEC transcribes (clause numbers and figures line up with the spec).
+ACME_CONTRACT = """\
+# Haulage Agreement — Acme Test Carriers
+
+**Agreement ref:** ACME/1
+**Between:** BlueFin Commerce ("the Customer") and Acme Test Carriers ("the Carrier")
+**Service:** synthetic test lanes
+**Term:** 1 January 2026 – 31 December 2026
+
+## Freight
+
+1. Freight is charged on chargeable weight: the higher of the billed weight and 10 kg.
+2. Rates per kg of chargeable weight:
+   - under 100 kg: ₹2.00
+   - over 100 kg, up to and including 500 kg: ₹1.50
+3. A fuel surcharge of 10% of freight applies.
+
+## Accessorial
+
+4. Residential delivery: ₹50.00 per consignment.
+
+## Invoicing
+
+5. In a calendar month with more than 2 consignments, a 5% discount applies to that month's invoice.
+6. Payment is due 30 days from invoice date.
+"""
 
 
 def spec(**top_level) -> dict:

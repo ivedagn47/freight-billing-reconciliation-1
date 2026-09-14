@@ -1,0 +1,34 @@
+// Phase 6 isolation flow: memos for every non-accept line and finding of an assembled report.
+// A test and live fixture run inside a copy of the freight-reconciliation flow directory (tests/stage_flows.py).
+
+digraph stage_memos {
+  graph [label="Stage: memos"]
+
+  start        [shape=Mdiamond]
+
+  memo_plan    [shape=box, runner=script, script="scripts/memo-plan.sh", working_dir="{_run_artefact_dir}",
+                output_schema="memo_plan_outputs",
+                description="One facts entry per non-accept report row, batched into packets."]
+
+  memo_fan     [runner=dynamic_fanout, items="memo_batches", max_parallel=4,
+                description="One branch per memo batch."]
+
+  write_memos  [shape=box, prompt_template="prompts/write-memos.md", working_dir="{_run_artefact_dir}",
+                output_schema="write_memos_outputs", model="sonnet", permission_mode="dontAsk", max_budget_usd=2,
+                description="Agent: draft headline, summary, contract basis and next step for each memo."]
+
+  memo_join    [runner=join, description="Every batch drafted, grounded and audited."]
+
+  render_memos [shape=box, runner=script, script="scripts/render-memos.sh", working_dir="{_run_artefact_dir}",
+                output_schema="render_outputs",
+                description="Re-check every batch and render one markdown memo per item with a code-generated facts table."]
+
+  done         [shape=Msquare]
+
+  start        -> memo_plan
+  memo_plan    -> memo_fan
+  memo_fan     -> write_memos
+  write_memos  -> memo_join [gates="gates/memos-grounded.sh,gates/worker-inputs-only.sh"]
+  memo_join    -> render_memos
+  render_memos -> done
+}

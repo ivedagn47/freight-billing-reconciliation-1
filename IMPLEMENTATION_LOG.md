@@ -775,3 +775,169 @@ scope rule. No test prices real data or encodes a reconciliation answer.
 - **Placeholder interfaces:** the adjudication input (`{item_id: {disposition, justification,
   contract_clause}}`) and `memo_items()` are placeholders for Phase 6 agents.
 - **Untested at scale:** the code is pure Python and linear in lines, but not measured beyond the sample.
+
+---
+
+## Phase 6 — agent nodes: extraction, agreement and cache, adjudication, memos (2026-09-14)
+
+### Scope and starting state
+
+The plan's Phase 6 row: "Agent nodes: extraction, agreement check and caching, adjudication, memos, and
+their gates — each node passes its gate in isolation." Flow wiring, the reconcile skill and the July dry
+run are Phase 7, so nothing here produces a reconciliation.
+
+The phase resumed from uncommitted partial work, inspected before continuing: the rate-spec schema had
+gained `non_pricing` and `unrepresentable`, and `tracing.py`, `agreement.py`, `grounding.py` and `audit.py`
+existed, with no tests, no CLI wiring and no nodes using them. They were kept and completed; everything
+else below was built in this phase. Both suites passed on that starting state (153 orchestrator, 109 freight).
+
+### What was built
+
+| Piece | Responsibility |
+|---|---|
+| `tracing.py` | A spec is anchored in its contract: identity (carrier, file, agreement ref, term), clauses exist, every priced number appears in a clause the element cites, every clause is accounted for, conditions use shipment vocabulary |
+| `agreement.py` | Two specs agree if the pricing engine behaves identically on probe shipments (amount, gap flags, per-charge-code status, service offered) and on invoice adjustments around every threshold |
+| `rules.py` | Extraction assignments, round 1 and round 2 agreement, adoption, the cache |
+| `audit.py` | From a worker's own transcript: only file tools, reads limited to assigned inputs and its branch, writes limited to its branch |
+| `grounding.py` | Every figure in agent prose must be copied from the facts packet it was given |
+| `adjudication.py` | Packets for open items, decision check, merge |
+| `memos.py` | Facts per non-accept row, draft check, markdown rendering with a code-generated facts table |
+| `cli.py` | `rules-plan`, `rules-agree`, `rules-final`, `audit-worker`, `adjudication-plan`, `check-adjudications`, `merge-adjudications`, `memo-plan`, `check-memos`, `render-memos`; `check-spec` now traces |
+| `prompts/` | `extract-rules.md` (+ `reference/rate-spec-guide.md`, schema included), `adjudicate.md`, `write-memos.md` (+ `reference/memo-style.md`) |
+| `gates/` | `rate-spec-traced.sh`, `worker-inputs-only.sh`, `adjudications-grounded.sh`, `memos-grounded.sh` |
+| `scripts/` | `rules-plan.sh`, `rules-agree.sh`, `rules-final.sh`, `adjudication-plan.sh`, `merge-adjudications.sh`, `memo-plan.sh`, `render-memos.sh` |
+| `definitions/` | agent outputs `adjudications`, `memo-drafts`; script outputs `rules-plan`, `rules-agreement`, `rules-final`, `adjudication-batches`, `adjudications-merged`, `memo-batches`, `memos-index` |
+| `tests/stages/`, `tests/stage_flows.py` | Isolation flows (`stage-rules`, `stage-adjudicate`, `stage-memos`) run inside a copy of the flow directory |
+| `tests/live/run_stage.py` | The isolation flows with real Claude workers and a minimal scripted supervisor |
+
+### Validation per node, in order
+
+| Node | Checks before its output is used |
+|---|---|
+| `extract_rules` (Opus, one branch per copy) | Flowstate schema + `_session_id` → `rate-spec-traced` gate → `worker-inputs-only` gate → `rules-agree` (behavioural agreement) → `rules-final` (second round if needed, cache write) |
+| `adjudicate` (Sonnet, one branch per batch) | Schema + `_session_id` → `adjudications-grounded` gate → `worker-inputs-only` gate → `merge-adjudications` → Phase 5 `report.verify` |
+| `write_memos` (Sonnet, one branch per batch) | Schema + `_session_id` → `memos-grounded` gate → `worker-inputs-only` gate → `render-memos` |
+
+Gates and merge steps re-run the same checks, so a batch cannot pass on the branch and be altered later.
+
+### Decisions and why
+
+- **Two copies are two fan-out branches.** They run in parallel in separate sessions. Independence is
+  verified, not requested: the audit gate reads each worker's transcript and fails if it opened anything
+  other than its contract and clause index (for example the other copy's spec or a cached spec).
+- **Agreement is by behaviour, not structure.** Careful readings name and order components differently.
+  The live Sagar copies did exactly that (`weight_component` vs `freight_weight`) and were rightly judged
+  equal. Probes use, per numeric field either spec reads: 0, every band end and constant, two points inside
+  each interval, and two beyond the last. These are crossed with every service level and every combination
+  of handling flags. Amounts are linear between thresholds, so agreement on these points is agreement
+  everywhere, provided quantities combine a field with constants. Too many probes fail closed.
+- **One bounded second round, copy against copy.** On disagreement two fresh copies must agree with each
+  other; there is no majority vote with round 1. This keeps the approved rule (two independent extractions
+  agree) inside an acyclic graph. If round 2 also disagrees, `rules-final` exits 1 and the run stops for a
+  human with the differences on disk.
+- **Every clause is accounted for.** Coverage requires each clause to be cited by a priced element, a gap,
+  `non_pricing` or `unrepresentable`. Any `unrepresentable` entry stops the run, because a spec that leaves a
+  pricing term out would under-state the contract.
+- **Cache key exactly as approved.** The key is sha256(contract sha | format version | prompt version).
+  Both versions are file hashes (schema; prompt + guide), so an edit cannot be forgotten. On every use a
+  cached spec is re-traced against the contract, and it is reused only if it was extracted against the same
+  shipment vocabulary and invoice charge codes (`extracted_with`); otherwise the contract is extracted again.
+  The cache lives outside runs (`rules_cache_dir`); cache hits record which agreement produced the entry.
+- **Adjudication cannot touch money.** Decisions have no amount fields. Packets carry the computed facts,
+  the two policy options and full clause text. Code appends the cited clause ids to the justification, and
+  `contract_clause` stays the clauses the expected amount comes from (the schema's meaning). This replaces
+  the Phase 5 placeholder, which let an adjudication override `contract_clause`.
+- **Memos: agents write prose, code writes facts.** Each memo has four prose fields; the table of amounts,
+  disposition and clauses is rendered from the report. Memo ids are deterministic and rendering refuses a
+  directory holding anything else.
+- **Grounding rule.** Amounts marked as money must equal an amount in the packet (sign ignored). Other
+  numbers must appear in the packet, except counting integers up to 12. Identifiers, dates, § references and
+  #item references are not figures. Facts are collected generously, so faithful quotes pass.
+- **Gate feedback is short.** Retry feedback shows a gate's last 10 stderr lines, so the CLI prints a header,
+  at most 8 problems and a count.
+- **Prompts carry their references.** The guide and the schema are included by flowstate, and workers get
+  absolute input paths. The worked example is an invented contract whose figures do not match any real one.
+  Workers load no skills (Phase 1 isolation); the graph decides what they see.
+- **Isolation flows are test fixtures.** They live in `tests/stages/` and are copied next to the flow's real
+  assets at run time, so the product directory holds no test graphs but the real prompts, schemas, gates and
+  scripts run through flowstate.
+
+### Found by the live runs and fixed
+
+1. **Contracts condition charges on facts BlueFin does not record.** In `phase6-rules-live-1`, one Falcon
+   copy correctly marked part of a residential-delivery clause `unrepresentable` (the condition was the
+   consignee's address type, which shipments.json does not hold), so the run stopped. The other copy silently
+   dropped that half of the condition. Stopping was correct, but it would have stopped every Falcon run.
+   Fix: a condition leaf `{"unrecorded": "<fact>"}` with three-valued logic in `pricing.py`:
+   - a component whose condition is unknown is excluded from the amount;
+   - a billed charge that only such a component could justify is flagged `CHARGE_UNVERIFIABLE`;
+   - a percentage of such a component is flagged `CONDITION_UNVERIFIABLE`, and its amount is undetermined;
+   - both flags escalate (`policy.yml`);
+   - agreement reports the status `unverifiable`, so a copy that drops the unrecorded part disagrees with one
+     that keeps it.
+2. **Copies disagreed on charge codes.** In the same run, Alpine's copies differed on `freight_incl_fuel`,
+   which Alpine invoices never carry, and on the generic `handling` code. Fix, in two parts:
+   - parsers declare `CHARGE_CODES`; each assignment lists the carrier's `invoice_charge_codes`, and agreement
+     compares only those;
+   - the guide states rules for combined, generic and specific codes.
+3. **A relative cache path silently missed the cache** (`phase6-rules-live-3-cache`, operator error: script
+   nodes run in the artefact directory). Fix: `rules.plan` refuses a relative cache directory, and the live
+   runner resolves the path.
+
+### Interpretations to review
+
+- `CHARGE_UNVERIFIABLE` and `CONDITION_UNVERIFIABLE` escalate. The alternative would dispute until the
+  carrier evidences the unrecorded fact.
+- A generic invoice "handling fee" is checked against the contract's handling-type charges (for example
+  protected handling of fragile goods). It is payable where the shipment qualifies and not applicable
+  otherwise, rather than disputed outright as uncontracted.
+- When copies agree, copy A is adopted. Its citations, gaps and non-pricing notes go into the spec; copy B's
+  are kept in the agreement record.
+- If round 2 still disagrees, the run stops for a human.
+
+### Tests
+
+193 freight tests pass without tokens (109 Phase 5 + 84 Phase 6). The 153 orchestrator tests are
+unchanged, since nothing under `orchestrator/` changed.
+
+| File | Tests | Coverage |
+|---|---|---|
+| `test_phase6_checks.py` | 32 | 14 tracing failures + carrier, equivalent encodings agree, 8 behavioural differences found, probe grid, probe limit, grounding, audit accepts/rejects/needs one worker |
+| `test_phase6_rules.py` | 9 | Assignments, adopt + cache + reuse, prompt change and stale entry invalidate, second round agrees or blocks, invalid/duplicate/unrepresentable copies block, bad inputs incl. relative cache path, changed invoice codes invalidate |
+| `test_phase6_packets.py` | 20 | Packet facts, 9 decision-check failures, merge into a verified report, empty merge, memo facts, 6 draft-check failures, rendering and refusals |
+| `test_phase6_prompts.py` | 8 | Guide matches `vocab.py`, guide example is a valid spec, prompts render completely, isolation flows pass static validation |
+| `test_phase6_unrecorded.py` | 10 | Three-valued conditions, unverifiable charge escalates, percentage of an unverifiable component, agreement on unrecorded, code-restricted comparison, parsers declare every code they emit on the real invoices |
+| `test_phase6_stage_runs.py` | 5 | Through flowstate with fake workers: copies pass gates, agree, cache and are reused with no workers; an untraced spec fails the gate and a retry with the gate's feedback recovers; disagreement → second round → adopted; second round disagrees → `script_failed`; adjudication rejects an unoffered disposition then merges into a verified report; memos reject an invented figure then render |
+
+### Live isolation runs (real Claude workers; `runs/_phase6-live/`, not committed)
+
+| Run | Workers | Result | Cost |
+|---|---|---|---|
+| `phase6-rules-live-1` (real contracts, before fixes) | 6 Opus | 12/12 gates passed first attempt, 3 tool calls per worker, no audit violations. Sagar agreed (144 probes, 0 differences). Alpine disagreed on charge codes. Falcon had an `unrepresentable` term → `rules_agree` exited 1 (stop for a human) | $1.66 |
+| `phase6-adjudicate-live-1` (synthetic acme packets) | 1 Sonnet | Both gates passed first attempt; 2 grounded decisions (escalate; accept where the billed amount matched and the only issue was the service level) | $0.21 |
+| `phase6-memos-live-1` (synthetic acme report) | 1 Sonnet | 4 memos, both gates passed first attempt; memos state the issue, the clause basis and a concrete next step | $0.11 |
+| `phase6-rules-live-2` (real contracts, after fixes) | 6 Opus | 12/12 gates passed first attempt. All three carriers agreed in round 1 (144 / 2,304 / 144 probes, 0 differences); both Falcon copies used `unrecorded` independently; both Alpine copies mapped `handling` to protected handling; 3 cache entries written | $1.53 |
+| `phase6-rules-live-3-cache` (relative cache path) | 6 Opus | Cache missed (see fix 3); the third independent pair agreed in round 1 for all three carriers again | $1.50 |
+| `phase6-rules-live-4-cache` | 0 | 3 cache hits, re-traced against the contracts and adopted; no workers | $0.00 |
+
+Total live spend: about $5.01. The adjudication and memo live runs predate fixes 1–3, which do not touch
+their prompts, checks or inputs. No real rate spec or run output is committed; the submission's evidence
+comes from the final run in Phase 8.
+
+### Known limitations
+
+- **Supervision:** isolation runs use a scripted supervisor (retry gate/validation failures, stop otherwise),
+  not the graph-orchestrator skill; that pairing is Phase 7.
+- **Probe assumption:** agreement probes assume quantities combine a field with constants. A max/min of two
+  different fields would bend along a diagonal the grid does not sample.
+- **Grounding:** it catches invented or computed figures, not a wrong statement made with real figures;
+  counting integers up to 12 are not checked.
+- **Audit:** it sees tool calls in the transcript. The allowed tools are all visible there; a future tool
+  that reads files without a tool call would not be.
+- **Real data:** adjudication and memos have run on synthetic data only; real packets arrive with the July
+  dry run.
+- **Cache:** no locking or eviction. Concurrent runs writing the same key write identical content through
+  atomic replace.
+- **After a stop:** when extraction stops for a human (round 2 disagreement or `unrepresentable`), there is
+  no tooling yet for a person to supply or approve a spec.
+- **Flow digest:** it still does not cover the imported `freight` package (Phase 7).

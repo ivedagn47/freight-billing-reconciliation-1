@@ -1,0 +1,34 @@
+// Phase 6 isolation flow: bounded adjudication of the lines policy left open.
+// A test and live fixture run inside a copy of the freight-reconciliation flow directory (tests/stage_flows.py).
+
+digraph stage_adjudicate {
+  graph [label="Stage: adjudication"]
+
+  start               [shape=Mdiamond]
+
+  adjudication_plan   [shape=box, runner=script, script="scripts/adjudication-plan.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="adjudication_plan_outputs",
+                       description="Batch the open items into facts packets (amounts, flags, options, clause text)."]
+
+  adjudicate_fan      [runner=dynamic_fanout, items="adjudication_batches", max_parallel=4,
+                       description="One branch per batch; empty when policy settled every line."]
+
+  adjudicate          [shape=box, prompt_template="prompts/adjudicate.md", working_dir="{_run_artefact_dir}",
+                       output_schema="adjudicate_outputs", model="sonnet", permission_mode="dontAsk", max_budget_usd=2,
+                       description="Agent: choose one offered disposition per item and justify it from the packet."]
+
+  adjudicate_join     [runner=join, description="Every batch decided, grounded and audited."]
+
+  merge_adjudications [shape=box, runner=script, script="scripts/merge-adjudications.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="merge_outputs",
+                       description="Re-check every batch; every open item decided exactly once."]
+
+  done                [shape=Msquare]
+
+  start               -> adjudication_plan
+  adjudication_plan   -> adjudicate_fan
+  adjudicate_fan      -> adjudicate
+  adjudicate          -> adjudicate_join [gates="gates/adjudications-grounded.sh,gates/worker-inputs-only.sh"]
+  adjudicate_join     -> merge_adjudications
+  merge_adjudications -> done
+}

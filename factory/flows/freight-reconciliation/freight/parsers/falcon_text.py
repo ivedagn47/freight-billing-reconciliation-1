@@ -28,6 +28,7 @@ LABELS = {
     "Residential delivery": "residential_delivery",
     "Detention charge at consignee": "detention",
 }
+CHARGE_CODES = frozenset(LABELS.values()) | {"other", "credit"}  # every code this parser can emit
 
 
 def sniff(path: Path, head: str) -> bool:

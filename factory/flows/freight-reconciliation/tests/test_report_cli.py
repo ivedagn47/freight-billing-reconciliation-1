@@ -31,7 +31,7 @@ def scenario():
     priced = pricing.price([inv, cn], ["ACME-07", "CN-1"], ships, {"acme": ratespec.validate(spec())})
     planned = policy.apply(priced, POLICY)
     adjudications = {"ACME-07#4": {"disposition": "dispute", "justification": "Detention is not in the contract.",
-                                   "contract_clause": "acme.md §2"}}
+                                   "clauses": ["2"]}}
     return priced, planned, adjudications
 
 
@@ -43,7 +43,8 @@ def test_assembled_report_is_valid_and_counts_each_rupee_once(scenario):
     assert [l["disposition"] for l in rep["lines"]] == ["accept", "accept", "dispute", "dispute", "escalate", "accept"]
     assert rep["summary"] == {"total_billed": 683.0, "total_expected": None, "total_in_dispute": 161.0, "line_count": 6,
                               "counts_by_disposition": {"accept": 3, "dispute": 2, "escalate": 1}}
-    assert rep["lines"][3]["justification"] == "Detention is not in the contract." and rep["lines"][3]["contract_clause"] == "acme.md §2"
+    assert rep["lines"][3]["justification"] == "Detention is not in the contract. (cited: acme.md §2)"
+    assert rep["lines"][3]["contract_clause"] == "acme.md §1, §2, §3"  # what the expected amount is computed from
     assert rep["lines"][0]["contract_clause"] == "acme.md §1, §2, §3"
     assert "credit note line CN-1#1" in rep["lines"][0]["justification"]
     assert [f["disposition"] for f in rep["invoice_findings"]] == ["escalate"]          # adjustment undetermined
@@ -123,6 +124,7 @@ FALCON_SPEC = {
         {"name": "residential", "kind": "accessorial", "charge_codes": ["residential_delivery"], "clauses": ["2"],
          "when": {"special_handling_includes": "residential"}, "calc": {"op": "flat", "amount": 250}}],
     "service_levels": {"allowed": ["standard", "express"], "clauses": ["1"]}, "invoice_adjustments": [], "gaps": [],
+    "non_pricing": [], "unrepresentable": [],
 }
 
 

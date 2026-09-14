@@ -1,0 +1,87 @@
+# Companion schema for stage-rules.dot (Phase 6 isolation flow).
+output_schemas:
+  rules_plan_outputs:
+    files:
+      - name: plan
+        path: "{_run_artefact_dir}/rules/plan.json"
+        definition: rules-plan
+    sets_variables:
+      rules_plan: plan
+      extraction_items: {file: plan, pointer: /extraction_items}
+
+  extract_outputs:
+    files:
+      - name: spec
+        path: "{_run_artefact_dir}/rate-spec.json"
+        definition: rate-spec
+    sets_variables:
+      rate_spec: spec
+
+  rules_agree_outputs:
+    files:
+      - name: agreement
+        path: "{_run_artefact_dir}/rules/agreement-1.json"
+        definition: rules-agreement
+    sets_variables:
+      rules_agreement: agreement
+      rerun_items: {file: agreement, pointer: /rerun_items}
+
+  rerun_outputs:
+    files:
+      - name: spec
+        path: "{_run_artefact_dir}/rate-spec.json"
+        definition: rate-spec
+    sets_variables:
+      rate_spec_rerun: spec
+
+  rules_final_outputs:
+    files:
+      - name: final
+        path: "{_run_artefact_dir}/rules/final.json"
+        definition: rules-final
+    sets_variables:
+      rules_final: final
+      rate_specs: {file: final, pointer: /specs}
+
+variables:
+  carriers_config:
+    type: path
+    description: Carrier master config (absolute path).
+  data_root:
+    type: path
+    description: Directory that contract paths in the carrier config are relative to (absolute path).
+  shipments_file:
+    type: path
+    description: Shipment records, for the vocabulary conditions may use (absolute path).
+  manifest:
+    type: path
+    default: ""
+    description: Discovery manifest; when given, carriers with in-scope documents are extracted.
+  carrier_ids:
+    type: string
+    default: ""
+    description: Comma-separated carriers to extract when no manifest is given.
+  rules_cache_dir:
+    type: path
+    description: Rate-spec cache directory (absolute path).
+  use_rules_cache:
+    type: boolean
+    default: true
+  rules_plan:
+    type: path
+  extraction_items:
+    type: list
+  rate_spec:
+    type: path
+    description: Per branch, the copy's rate spec; after the join, the list of them in branch order.
+  rules_agreement:
+    type: path
+  rerun_items:
+    type: list
+  rate_spec_rerun:
+    type: path
+  rules_final:
+    type: path
+  rate_specs:
+    type: dict
+    description: Carrier -> adopted rate spec path.

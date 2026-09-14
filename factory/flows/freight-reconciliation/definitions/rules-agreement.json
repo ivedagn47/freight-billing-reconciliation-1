@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Extraction agreement, round 1 (script output)",
+  "type": "object",
+  "required": [
+    "round",
+    "carriers",
+    "rerun_items"
+  ],
+  "properties": {
+    "round": {
+      "const": 1
+    },
+    "carriers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "status",
+          "copies"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "agreed",
+              "disagreed"
+            ]
+          }
+        }
+      }
+    },
+    "rerun_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "carrier",
+          "copy",
+          "round",
+          "contract",
+          "clause_index",
+          "vocabulary",
+          "inputs"
+        ],
+        "properties": {
+          "carrier": {
+            "type": "string",
+            "minLength": 1
+          },
+          "copy": {
+            "enum": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ]
+          },
+          "round": {
+            "enum": [
+              1,
+              2
+            ]
+          },
+          "contract": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clause_index": {
+            "type": "string",
+            "minLength": 1
+          },
+          "vocabulary": {
+            "type": "object",
+            "required": [
+              "service_level",
+              "special_handling"
+            ]
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

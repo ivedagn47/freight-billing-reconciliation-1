@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Adjudication batches (script output)",
+  "type": "object",
+  "required": [
+    "batch_size",
+    "items",
+    "batches"
+  ],
+  "properties": {
+    "batch_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "items": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "batches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "batch_id",
+          "packet",
+          "item_ids",
+          "inputs"
+        ],
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "packet": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "item_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Merged adjudication decisions (script output)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decisions"
+  ],
+  "properties": {
+    "decisions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "disposition",
+          "justification",
+          "clauses",
+          "batch_id",
+          "session_id"
+        ],
+        "properties": {
+          "disposition": {
+            "enum": [
+              "accept",
+              "dispute",
+              "escalate"
+            ]
+          },
+          "justification": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clauses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(header|[0-9]+)$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

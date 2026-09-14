@@ -10,6 +10,8 @@ Structure (definitions/rate-spec.json):
   service_levels       services the contract offers
   invoice_adjustments  invoice-level discounts gated on consignments tendered in the billing month
   gaps                 what the contract leaves undetermined (informational)
+  non_pricing          clauses that do not affect a price, with the reason
+  unrepresentable      pricing terms the building blocks cannot express (any entry stops the run)
 
 Bands are written exactly as the contract words them (inclusive or exclusive ends). A value
 that falls in no band is never snapped to the nearest one: pricing reports it as a gap.
@@ -26,7 +28,9 @@ from .money import to_decimal
 
 SPEC_VERSION = 1
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "definitions" / "rate-spec.json"
-NON_PRICING_KEYS = {"_session_id", "description", "clauses", "gaps", "contract_file", "agreement_ref"}
+NON_PRICING_KEYS = {"_session_id", "description", "clauses", "gaps", "non_pricing", "unrepresentable", "contract_file",
+                    "agreement_ref"}
+CITING_GROUPS = ("quantities", "components", "invoice_adjustments", "gaps", "non_pricing", "unrepresentable")
 
 
 class SpecError(Exception):
@@ -147,7 +151,7 @@ def pricing_view(spec: dict):
 def cited_clauses(spec: dict) -> dict[str, list[str]]:
     """Every clause citation in the spec, keyed by the element that makes it."""
     out = {"term": spec["term"]["clauses"], "service_levels": spec["service_levels"]["clauses"]}
-    for group in ("quantities", "components", "invoice_adjustments", "gaps"):
+    for group in CITING_GROUPS:
         for i, element in enumerate(spec[group]):
             out[f"{group}[{i}]{'.' + element['name'] if 'name' in element else ''}"] = element["clauses"]
     return out

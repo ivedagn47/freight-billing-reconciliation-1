@@ -14,6 +14,7 @@ from ..money import fmt, round_inr, to_decimal
 from .base import ParseError, check, new_document, new_line
 
 NAME = "sagar-csv"
+CHARGE_CODES = frozenset({"freight", "cold_chain_premium", "credit"})  # every code this parser can emit
 INVOICE_HEADER = ["cnote_no", "booking_dt", "wt_kg", "dist_km", "freight_rs", "chill_prem_rs", "total_rs"]
 CREDIT_HEADER = ["credit_note", "against_invoice", "cnote_no", "credit_rs"]
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
