@@ -1,0 +1,24 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"text": "writing output for session ${session_id}"},
+        {"write": {"path": "${out}", "json": {"_session_id": "${session_id}", "note": "hello from fake worker"}}}
+      ],
+      "cost_usd": 0.0,
+      "num_turns": 2,
+      "result": "wrote ${out}"
+    },
+    {
+      "steps": [
+        {"text": "resumed session ${session_id} for invocation ${invocation}"},
+        {"write": {"path": "followup-${invocation}.txt", "content": "follow-up handled by ${session_id}\n"}}
+      ],
+      "cost_usd": 0.0,
+      "num_turns": 1,
+      "result": "follow-up done"
+    }
+  ]
+}

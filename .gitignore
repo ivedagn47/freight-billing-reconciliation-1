@@ -4,6 +4,10 @@ factory/factory-prefs.yml
 # Orchestrator local venv
 orchestrator/.venv/
 
+# Scratch runs (probes, test runs); real evidence runs are committed explicitly
+runs/_*/
+.pytest_cache/
+
 # Python
 __pycache__/
 *.py[cod]

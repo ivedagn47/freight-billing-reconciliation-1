@@ -23,10 +23,14 @@ so every run has to hold up, not just a lucky one).
 
 ## Current state of the kit
 
-This checkout is a **partial scaffold**, not a working system:
-- `orchestrator/lib/flowstate/` and `orchestrator/lib/agentctl/` (and its `harnesses/` subdir) are
-  **empty directories** — the actual CLI implementations referenced by `orchestrator/bin/flowstate`
-  and `orchestrator/bin/agentctl` do not exist yet in this copy.
+The kit shipped as a **partial scaffold**. Work is proceeding in phases (Option A: build flowstate +
+agentctl, then the reconciliation flow); `IMPLEMENTATION_LOG.md` records each phase's decisions.
+- `orchestrator/lib/agentctl/` — **implemented (Phase 1)**, see "agentctl" below.
+- `orchestrator/lib/flowstate/` — still an **empty directory**; `orchestrator/bin/flowstate` fails
+  until Phase 2.
+- All kit shell files were committed without the executable bit; `bin/agentctl` has been fixed, the
+  rest (`bin/flowstate`, `setup.sh`, demo-flow scripts) have not. `smoke-branch.dot` references a
+  `scripts/reduce.sh` that does not exist.
 - `.claude/skills/graph-orchestrator/SKILL.md`, referenced by `PROBLEM.md` as the orchestrator
   protocol skill, does not exist in this checkout either.
 - Only the two demo flows (`factory/flows/smoke-test/`, `factory/flows/smoke-branch/`) and the
@@ -48,9 +52,37 @@ orchestrator/bin/flowstate   # flow CLI  — PYTHONPATH-wrapped invocation of `p
 orchestrator/bin/agentctl    # worker lifecycle CLI (spawn/wait/send/kill) — `python -m agentctl`
 ```
 
-There is no build, lint, or test tooling defined anywhere in this repo yet — none of `package.json`,
-a Python project file, a Makefile, or a CI config exist. If you add flowstate/agentctl code or
-scripts, decide on and document (in `DESIGN.md`) whatever validation you introduce for it.
+Tests (pytest; install with `orchestrator/.venv/bin/pip install -r orchestrator/requirements-dev.txt`):
+
+```bash
+(cd orchestrator && .venv/bin/python -m pytest)                                   # all; no tokens spent
+(cd orchestrator && .venv/bin/python -m pytest tests/test_lifecycle.py -k stall)  # single test
+orchestrator/tests/live/smoke_claude_worker.sh        # real Claude worker via tmux (spends cents)
+orchestrator/.venv/bin/python orchestrator/tests/live/probe_isolation.py  # re-verify worker isolation
+```
+
+Lifecycle tests need a working `tmux`. Scratch output from live scripts goes to `runs/_*/` (gitignored).
+
+## agentctl
+
+`agentctl --registry <dir> {spawn,wait,send,kill,status,list,logs}`; JSON on stdout (except `logs`).
+- The registry is a directory inside a run (`runs/<run_id>/workers/<worker_id>/`): `meta.json`,
+  `prompt.md`, aggregate `transcript.jsonl`/`stderr.log`, and `invocations/NNN/` (000 = spawn,
+  001+ = `send`) holding `command.json`, `transcript.jsonl`, `stderr.log`, pids, `result.json` and
+  `exit_code`. `exit_code` is written last and is the completion marker.
+- Each invocation runs `python -m agentctl.runner <invocation_dir>` inside a detached tmux session
+  (`agentctl-<registry-hash>-<id>`). The runner strips `CLAUDE*` session variables inherited from
+  the launching Claude Code session (keeps provider/config vars), tees stream-json output, and
+  forwards SIGHUP/SIGTERM to the child's process group.
+- States: running, stalled (transcript unchanged for `stall_after_s`), exited, failed, killed, lost.
+- Harnesses (`harnesses/`): `claude` builds `claude -p --output-format stream-json` with
+  `--session-id` on spawn and `--resume` on send; `fake` runs `fake_worker.py` from a JSON script
+  (captures from the prompt, writes files, sleeps/heartbeats, fixed exit codes) for token-free tests.
+- Worker isolation is enforced in `harnesses/claude.py` and was verified by experiment, not assumed:
+  tools limited to Read/Write/Edit/Glob/Grep (`--tools` + `--allowedTools`, Bash/web disallowed),
+  `--setting-sources ""` (no project CLAUDE.md/skills), `--disable-slash-commands` (bundled skills),
+  `--safe-mode` (auto-memory), `--strict-mcp-config`, `--permission-prompts none`. Dropping any of
+  these re-opens a leak that `probe_isolation.py` detects.
 
 To understand the graph machinery before designing against it, run the two demo flows:
 - `factory/flows/smoke-test/` — linear agent-node flow (`research` → `summarise`) with a
