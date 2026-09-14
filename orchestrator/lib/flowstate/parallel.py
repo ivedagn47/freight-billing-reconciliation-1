@@ -82,6 +82,10 @@ def drive(store: RunStore, flow: Flow, node: Node, deadline: float | None,
         time.sleep(POLL_S)
 
 
+def _budget(node: Node, state: dict) -> int:
+    return node.max_retries if node.max_retries is not None else int(state["config"]["max_retries"])
+
+
 def _counts(par: dict) -> dict:
     counts = Counter(b["status"] for b in par["branches"].values())
     return {"total": len(par["branch_order"]), **{k: counts.get(k, 0) for k in
@@ -132,7 +136,8 @@ def _create(store: RunStore, flow: Flow, node: Node) -> dict | None:
                 context["item"] = item
             branches[bid] = {"index": index, "entry": entry, "status": "pending", "cursor": entry,
                              "context": context, "variables": {}, "situation": None, "created_at": now_iso(),
-                             "nodes": {n: new_node_state(flow.nodes[n].kind) for n in sorted(region.branches[entry])}}
+                             "nodes": {n: new_node_state(flow.nodes[n].kind, _budget(flow.nodes[n], state))
+                                       for n in sorted(region.branches[entry])}}
         st["parallel"][node.id] = {
             "kind": node.kind, "join": region.join, "status": "running", "created_at": now_iso(),
             "items_var": node.items, "items": items, "max_parallel": max_parallel,

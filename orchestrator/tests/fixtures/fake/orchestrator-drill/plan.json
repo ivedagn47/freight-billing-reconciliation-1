@@ -1,0 +1,30 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "goal", "regex": "(?m)^Goal: (.+)$"}},
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"text": "planning: writing a single step (the schema requires 3 to 5)"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "goal": "${goal}",
+          "steps": ["sweep-floor"]
+        }}}
+      ],
+      "result": "wrote a plan with one step"
+    },
+    {
+      "steps": [
+        {"capture": {"name": "out", "regex": "(\\S+/plan\\.json)"}},
+        {"text": "retry ${invocation}: rewriting the plan with three steps"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "goal": "tidy the workshop",
+          "steps": ["sweep-floor", "sort-tools", "label-bins"]
+        }}}
+      ],
+      "result": "rewrote the plan"
+    }
+  ]
+}

@@ -10,8 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-def new_node_state(kind: str) -> dict:
-    return {"kind": kind, "status": "pending", "retries_used": 0, "attempts": []}
+def new_node_state(kind: str, max_retries: int | None = None) -> dict:
+    """`max_retries` is the node's effective budget, stored so situations can report it."""
+    record = {"kind": kind, "status": "pending", "retries_used": 0, "attempts": []}
+    if max_retries is not None:
+        record["max_retries"] = max_retries
+    return record
 
 
 @dataclass(frozen=True)

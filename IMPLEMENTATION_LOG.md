@@ -470,3 +470,177 @@ New coverage:
 - Every script receives all variables as `FLOWSTATE_VAR_*`; very large list/dict values could exceed
   OS environment limits.
 - Acyclic graphs only; one `advance` driver per run.
+
+---
+
+## Phase 4 — graph-orchestrator skill (2026-09-14)
+
+### Starting state
+
+- No `.claude/` directory existed, although `PROBLEM.md` and `brief.md` both reference
+  `.claude/skills/graph-orchestrator/SKILL.md` ("a minimal orchestrator skill with just enough machinery to
+  progress a flowstate graph"). The Phase 4 brief's `.claude/skills/graL.md` was read as that path.
+- The skill was written against the real CLI (`flowstate <cmd> --help`) and `runtime.OPTIONS` (24
+  situation kinds), not the original plan. Four runtime facts shaped it:
+  1. `retry` is refused while a worker is running or stalled (`worker_busy`).
+  2. `retry` and `respawn` share one per-node `max_retries` budget, so an exhausted node cannot be respawned.
+  3. Many situations list only `abort` in `options`, but `pause` is always available while a run is active.
+  4. Situations did not report the budget, so an orchestrator would have had to count retries itself.
+
+### What was built
+
+| Piece | Purpose |
+|---|---|
+| `.claude/skills/graph-orchestrator/SKILL.md` | The procedure: role, allowed commands, forbidden actions, supervision loop, decision order, retry vs respawn, feedback rules, branch supervision, pause and final-report templates |
+| `.claude/skills/graph-orchestrator/situations.md` | Reference: every situation (meaning, fields, evidence, moves, default decision) and every command error code |
+| Flowstate: `scope.py`, `engine.py`, `parallel.py`, `runtime.py` | Node records store their effective `max_retries`; every node situation reports `max_retries` and `retries_remaining` |
+| Flowstate: `cli.py` | Help text now shows `--branch` / `--feedback-file` and that `--max-wait` returns any `*_running` situation |
+| agentctl: `harnesses/fake_worker.py` | Steps may carry `when` / `unless` prompt regexes, so one fake script can fail for exactly one fan-out item |
+| `orchestrator/tests/fixtures/flows/orchestrator-drill/` + fakes | Deterministic drill: top-level `validation_failed`, one branch `validation_failed`, a gate, a script (with a `DRILL_FINISH_FAIL` hook) |
+| `orchestrator/tests/test_orchestrator_skill.py` | Contract tests and scripted-supervisor protocol tests (token-free) |
+| `orchestrator/tests/live/orchestrate_drill.sh` | A real Claude orchestrator loads the skill and supervises the drill (`SCENARIO=recover` or `pause`) |
+
+### How the skill works
+
+- **Division of labour.** The graph states guarantees; Flowstate and agentctl do the mechanics; the
+  orchestrator only interprets situations and picks one Flowstate command. The skill contains no domain logic.
+- **Loop.** `status` (or `validate` + `init` with human-provided inputs) → `advance RUN --max-wait 300` →
+  classify → inspect the evidence the situation names → one command → advance again. It stops on
+  `completed`, `aborted`, `paused`, or after pausing for a human.
+- **Decision order**, first match wins:
+  1. Finished or waiting: stop, or advance again.
+  2. Budget spent (`retries_exhausted` or `retries_remaining` = 0): pause.
+  3. Definition, input or routing problems (`render_failed`, `condition_error`, `no_route`,
+     `ambiguous_route`, `fanout_invalid`, `flow_changed`): pause.
+  4. Worker or output problems: retry, respawn or pause.
+  5. Deterministic code failures (`script_failed`, gate on script output, `reducer_failed`,
+     `reducer_output_invalid`): pause unless the evidence shows a transient cause.
+  6. Unknown outcome (`node_interrupted`, `reducer_interrupted`): retry once, then pause.
+  7. Anything unclear: pause.
+- **Retry vs respawn.** Retry keeps the same worker and session. The feedback must be built from evidence:
+  JSON pointer, violated constraint read from the schema, value received, file to rewrite. It never supplies
+  content, and never suggests weakening a contract. Respawn starts `<worker>.respawn-N` with a new session and
+  keeps the old evidence. For stalled workers: wait once with `--stall-after ≈ 2 × stall_after_s`, then respawn.
+  For a single node, a repeat of the same failure escalates to respawn if budget remains, otherwise pause.
+  Missing information or authority means pause immediately.
+- **Branches.** Always pass `--branch <branch_id>` from the situation, except for reducer situations, which
+  belong to the join. Resolve one branch situation, advance, then handle the next. Never touch completed or
+  running branches. If several branches fail the same way, suspect a systemic cause and pause.
+- **Pausing.** `pause --reason` followed by a fixed report: what happened, where, evidence, why not
+  continued, decision needed, how to continue. Pausing keeps the pending situation and budget.
+- **Forbidden:**
+  - editing run directories or flow definitions, or writing outputs
+  - starting or killing workers directly
+  - running a second driver
+  - keeping a private retry counter
+  - aborting on its own initiative
+  - any shell use other than one plain `orchestrator/bin/flowstate` command, with no chaining or expansion
+    (evidence is read with Read, Glob and Grep)
+
+### Decisions and why
+
+- **Pause, not abort, is the default stop.** Abort is irreversible; pause keeps the pending situation, the
+  evidence and the budget, and a test shows `resume` returns to the same situation. The skill aborts only when
+  a human says so.
+- **Budget lives in Flowstate.** Rather than have the skill count retries (which could disagree with the
+  runtime), node situations now carry `max_retries` and `retries_remaining` from the node record that
+  `retry` and `respawn` enforce.
+- **Contract-bound documentation.** Tests require the situation reference to equal `runtime.OPTIONS` exactly,
+  every command and flag quoted in the skill to exist in the argparse parser, and every documented error code
+  to be raised somewhere in `flowstate/`. The skill cannot silently drift from the runtime.
+- **Scripted `Supervisor` as a test double.** Deterministic tests cannot run a model, so a test-only class
+  applies the documented decision procedure literally through the real CLI in subprocesses. This proves the
+  command sequences in the skill produce the documented outcomes. Judgement by a real model is exercised
+  separately by the live script. The Supervisor is not product code.
+- **Loading via the Skill tool in live tests.** A `/graph-orchestrator` prompt expansion does not appear in the
+  stream-json transcript, so loading could not be verified. The live prompt therefore asks for the Skill tool,
+  which leaves a `tool_use` record.
+- **Enforcement in the live harness.** `--tools Bash,Read,Grep,Glob,Skill`,
+  `--allowedTools "Bash(orchestrator/bin/flowstate:*)"`, Write/Edit/web disallowed, `--permission-mode dontAsk`,
+  `--permission-prompts none`. Probes showed that without `dontAsk`, an arbitrary `ls` ran. With `dontAsk`,
+  `touch` was denied (the file was not created) while `ls` and Read still worked. So mutation is prevented, but
+  read-only shell viewing is not.
+
+### Tests
+
+153 tests pass, all without tokens: 140 existing plus 13 new.
+
+- **Contract (6):**
+  - frontmatter and link to the reference
+  - every `flowstate` command and flag quoted in SKILL.md or situations.md exists
+  - the situation reference equals `runtime.OPTIONS`
+  - SKILL.md mentions every situation
+  - documented error codes are raised by the runtime
+  - the Never list covers state edits, tmux, agentctl, fabrication, flow edits, private counters and abort
+- **Protocol, scripted Supervisor via the real CLI with fake workers (6):**
+  1. The drill completes via exactly two retries. Checked: same session IDs on retry; rejected outputs
+     preserved; feedback recorded in state, in the `retry_requested` event and in the worker's `input.md`;
+     corrected outputs pass `outputs_validated` and their schemas; siblings run once; the only workers are the
+     ones Flowstate launched through agentctl.
+  2. Retry → respawn → pause escalation. The pending `validation_failed` shows `retries_remaining: 0`, and
+     after `resume` the same situation returns.
+  3. A stalled worker: wait once with `--stall-after 6.0`, then respawn. Flowstate killed the old worker and
+     the run completes.
+  4. A gate failure on agent output: retry with the gate script and its stderr quoted. Gate evidence `eval-1`
+     exited 1 and `eval-2` exited 0.
+  5. A deterministic script failure: pause, and the script is not rerun.
+  6. `flow_changed`: pause, and nothing runs.
+- **Harness (1):** fake-worker `when` / `unless`.
+
+### Real-agent runs (Sonnet orchestrator, fake workers)
+
+Development iterations, each of which changed the skill or the harness:
+- **First `recover` run.** The run completed, but two checks failed. First, the orchestrator put `${PWD}` in
+  retry feedback; dontAsk denied that command and the orchestrator reissued it without the expansion. This led
+  to the "one plain flowstate command, no shell expansion, single-quoted feedback" rule. Second, skill loading
+  could not be proven, which led to loading through the Skill tool.
+- **First two `pause` runs.** Decisions were correct (two retries, then a pause with evidence), but the
+  orchestrator read evidence with `find`, `find | head` and `cat … 2>/dev/null`. This led to the explicit
+  Never rule and a `find` allowance in the viewer check. The drill script's comment also stated the expected
+  decision ("retrying cannot fix"); it was removed so the pause has to come from the evidence.
+
+Final runs, against the committed skill text:
+
+| Scenario | Run | Checks | Outcome | Cost |
+|---|---|---|---|---|
+| recover | `runs/_orchestrator-live/drill-recover-20260914-201220` | 13 / 13 | Skill loaded via Skill tool → status → advance → read rejected output and schema → retry `plan` with pointer, constraint and received value → advance → retry `work --branch fan-0001` → advance → `completed`. No denials, no Write/Edit, same sessions, siblings once. | $0.21, 14 turns |
+| pause | `runs/_orchestrator-live/drill-pause-20260914-201312` | 15 / 15 | Same two retries → `script_failed` at `finish` → read stderr and script → `pause` with a reason naming the deterministic cause and the needed human decision → PAUSED report. `script_failed` still pending, script not rerun. | $0.26, 19 turns |
+
+In both final runs the orchestrator still made one plain read-only `find` call for listing, despite the rule.
+
+### Deviations from the plan / brief
+
+- **Stalled workers are not retried.** The runtime refuses (`worker_busy`); the brief's "retry if
+  appropriate" becomes wait once, then respawn.
+- **After the budget is exhausted, respawn is impossible** because retry and respawn share one budget. The
+  skill pauses instead of respawning.
+- **The skill never aborts on its own initiative**; the brief allowed "abort if continuing would be unsafe".
+- **A small Flowstate addition:** budget fields on situations, plus CLI help text fixes. **A test-harness
+  addition:** fake-worker `when` / `unless`.
+
+### Implemented and tested vs inferred
+
+- **Exercised by tests or live runs:** completion; top-level and branch `validation_failed` → retry;
+  escalation to respawn and then pause; stalled → wait → respawn; agent `gate_failed` → retry;
+  `script_failed` → pause; `flow_changed` → pause; pause preserving the situation; branch-scoped retry leaving
+  siblings untouched.
+- **Written as guidance, not exercised:**
+  - `worker_failed` sub-cases; `worker_timeout`; reducer situations; `node_interrupted` and
+    `reducer_interrupted`
+  - `render_failed`, `condition_error`, `no_route`, `ambiguous_route`, `fanout_invalid`
+  - `busy` handling
+  - the "several branches fail alike → pause" heuristic
+  - a real orchestrator starting a run itself (`validate` / `init`); the live drills were pre-initialised
+  - judgement on genuinely ambiguous business evidence (the drill failures are structural)
+
+### Known limitations
+
+- Judgement quality depends on the model. Live evidence is one Sonnet run per scenario against the final text,
+  plus the development runs above.
+- Adherence to the "Read/Glob/Grep, not shell viewers" rule is imperfect, as the final runs show. Enforcement
+  in the live harness prevents mutation, not reading.
+- The skill itself cannot enforce its Never list. Enforcement depends on how the orchestrator session is
+  launched: the live script sets tools and permissions, but an interactive session relies on the user's
+  permission settings.
+- Nothing stops an orchestrator from *reading* `state.yaml`; the skill only forbids writing it.
+- Live tests cost about $0.20–0.26 per scenario and are not part of pytest.

@@ -18,6 +18,8 @@ Script format:
 
 Templates use ${name}; available names: session_id, invocation, cwd, worker_id,
 plus every capture. Captures match against the prompt text (group 1, else group 0).
+Any step may carry "when": "<regex>" or "unless": "<regex>" (matched against the prompt),
+so one script can behave differently per item in a fan-out.
 """
 
 import argparse
@@ -72,6 +74,10 @@ def run(script: dict, session_id: str, invocation: int, prompt: str) -> int:
 
     try:
         for step in spec.get("steps", []):
+            if "when" in step and not re.search(step["when"], prompt):
+                continue
+            if "unless" in step and re.search(step["unless"], prompt):
+                continue
             if "capture" in step:
                 cap = step["capture"]
                 match = re.search(cap["regex"], prompt)

@@ -30,8 +30,8 @@ phase's decisions and is the source for `DESIGN.md`.
 - `orchestrator/lib/flowstate/` — **implemented through Phase 3**, see "flowstate" below: acyclic
   graphs with start/done, agent and script nodes, gates, conditions, `fork`, `join` (with reducers)
   and `dynamic_fanout`. Nested fork/fan-out regions are rejected.
-- `.claude/skills/graph-orchestrator/SKILL.md`, referenced by `PROBLEM.md`, does not exist yet
-  (Phase 4). No freight-specific flow exists yet (Phase 5+).
+- `.claude/skills/graph-orchestrator/` — **implemented (Phase 4)**, see "graph-orchestrator skill"
+  below. No freight-specific flow or skill exists yet (Phase 5+).
 - Kit shell files were committed without the executable bit. Both `bin/` wrappers are fixed; flowstate
   runs flow scripts, gates and reducers through their `#!` interpreter, so the rest work unchanged.
 - `smoke-branch/scripts/reduce.sh` was missing from the kit and has been added as a minimal fixture.
@@ -54,6 +54,8 @@ Tests (pytest; install with `orchestrator/.venv/bin/pip install -r orchestrator/
 (cd orchestrator && .venv/bin/python -m pytest tests/test_flowstate_parallel.py -k empty)  # single test
 orchestrator/tests/live/smoke_claude_worker.sh        # real Claude worker via tmux (spends cents)
 orchestrator/.venv/bin/python orchestrator/tests/live/probe_isolation.py  # re-verify worker isolation
+SCENARIO=recover orchestrator/tests/live/orchestrate_drill.sh   # real Claude orchestrator + skill (~$0.20)
+SCENARIO=pause orchestrator/tests/live/orchestrate_drill.sh
 ```
 
 Lifecycle and agent-node tests need a working `tmux`; several flow scripts need `jq`. Scratch runs go
@@ -86,7 +88,8 @@ orchestrator/bin/flowstate --runs-dir runs/_scratch advance <run_id>
 - States: running, stalled (transcript unchanged for `stall_after_s`), exited, failed, killed, lost.
 - Harnesses (`harnesses/`): `claude` builds `claude -p --output-format stream-json` with
   `--session-id` on spawn and `--resume` on send; `fake` runs `fake_worker.py` from a JSON script
-  (captures from the prompt, writes files, sleeps/heartbeats, fixed exit codes) for token-free tests.
+  (captures from the prompt, writes files, sleeps/heartbeats, fixed exit codes; any step can be made
+  conditional on the prompt with `when`/`unless` regexes) for token-free tests.
 - Worker isolation is enforced in `harnesses/claude.py` and was verified by experiment, not assumed:
   tools limited to Read/Write/Edit/Glob/Grep (`--tools` + `--allowedTools`, Bash/web disallowed),
   `--setting-sources ""` (no project CLAUDE.md/skills), `--disable-slash-commands` (bundled skills),
@@ -182,6 +185,37 @@ decisions, status), `execution.py` (one agent/script node inside a `Scope`, as n
   Phase 2 node records, `situation`), and `join_state` (`status`, `folded`, `summary`,
   `reducer_runs`, `merged_variables`). Top-level `nodes.<region node>` is only a
   `status: in_branches` marker. `flowstate status` summarises all of this under `parallel`.
+
+## graph-orchestrator skill
+
+`.claude/skills/graph-orchestrator/SKILL.md` (procedure) + `situations.md` (reference) tell an
+orchestrator agent how to supervise any Flowstate run. Division of labour: the graph states the
+guarantees, Flowstate and agentctl do the mechanics, the orchestrator only judges what a situation
+means and picks the next Flowstate command. It contains no domain logic.
+
+- **Loop**: `flowstate advance RUN --max-wait 300` → read the situation → inspect the evidence it
+  points to → one Flowstate command (`retry`, `respawn`, `pause`, `resume`, `abort`) → advance again.
+  Stops on `completed`, `aborted`, `paused`, or after pausing for a human.
+- **Decision order**: finished/waiting → budget spent (`retries_remaining` = 0) → definition, input or
+  routing problems (pause) → worker/output problems (retry, respawn or pause) → deterministic code
+  failures (pause unless the cause is transient) → unknown outcome (retry once) → anything unclear
+  (pause). The skill prefers `pause` to `abort`, which it never does on its own initiative.
+- **Retry vs respawn**: retry continues the same worker conversation with precise, evidence-based
+  feedback (JSON pointer, violated constraint, value received, file to rewrite; never supplied
+  content); respawn starts `<worker>.respawn-N` with a new session. Stalled workers cannot be retried
+  (Flowstate returns `worker_busy`): wait once with `--stall-after`, then respawn. Both share the node's
+  budget, which node situations report as `max_retries` / `retries_remaining`.
+- **Branches**: pass `--branch <branch_id>` from the situation (except reducer situations, which are on
+  the join); never touch completed or running branches; several branches failing alike → pause.
+- **Forbidden**: editing anything under a run directory or a flow definition, writing outputs,
+  starting/killing workers directly (claude, agentctl spawn/send/kill, tmux, kill), a second driver,
+  keeping a private retry counter. One plain `flowstate` command per shell call, no shell expansion.
+- **Tests**: `tests/test_orchestrator_skill.py` checks the skill against the real CLI/runtime (every
+  command, flag, situation and error code) and runs a scripted `Supervisor` that follows the decision
+  procedure through the real CLI against `tests/fixtures/flows/orchestrator-drill/` (fake workers).
+  `tests/live/orchestrate_drill.sh` runs a real Claude orchestrator that loads the skill with the Skill
+  tool, with Bash pre-approved only for `orchestrator/bin/flowstate` in `dontAsk` mode (mutating shell
+  commands are denied; read-only ones still run).
 
 ## Flow file architecture (DOT + flow.yml)
 

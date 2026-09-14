@@ -36,6 +36,7 @@ from .state import RunStore, now_iso
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,120}$")
 POLL_S = 0.5
 SCHEMA_VERSION = 2
+RETRY_BUDGET_KINDS = {"agent", "script", "join"}
 
 
 # ---------------------------------------------------------------- validate / init
@@ -123,12 +124,15 @@ def init_run(flow_ref: str | None, var_pairs: list[str] = (), *, run_id: str | N
     store = RunStore(runs_root(runs_dir) / run_id)
     store.create_layout()
 
+    default_retries = int(prefs["max_retries"] if max_retries_default is None else max_retries_default)
     nodes = {}
     for n in flow.nodes.values():
         region = flow.region_of(n.id)
+        budget = (n.max_retries if n.max_retries is not None else default_retries) \
+            if n.kind in RETRY_BUDGET_KINDS else None
         # Region nodes execute per branch, under state.parallel; this entry only marks them.
         nodes[n.id] = {"kind": n.kind, "status": "in_branches", "parallel": region.parallel} if region \
-            else new_node_state(n.kind)
+            else new_node_state(n.kind, budget)
     state = {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -141,7 +145,7 @@ def init_run(flow_ref: str | None, var_pairs: list[str] = (), *, run_id: str | N
             "harness_opts": dict(harness_opts or {}),
             "fake_scripts": scripts,
             "supervision": supervision,
-            "max_retries": int(prefs["max_retries"] if max_retries_default is None else max_retries_default),
+            "max_retries": default_retries,
             "stall_after_s": float(prefs["stall_after_s"]),
             "script_timeout_s": float(prefs["script_timeout_s"]),
             "max_parallel_branches": int(prefs["max_parallel_branches"]),

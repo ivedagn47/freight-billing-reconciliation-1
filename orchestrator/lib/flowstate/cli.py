@@ -3,8 +3,8 @@
     flowstate validate [FLOW]
     flowstate init [FLOW] --var K=V ... [--harness claude|fake --fake-script NODE=PATH ...]
     flowstate advance RUN [--max-wait S] [--stall-after S]    -> exactly one situation
-    flowstate retry RUN NODE [--feedback TEXT]
-    flowstate respawn RUN NODE [--reason TEXT]
+    flowstate retry RUN NODE [--branch ID] [--feedback TEXT | --feedback-file PATH]
+    flowstate respawn RUN NODE [--branch ID] [--reason TEXT]
     flowstate pause RUN [--reason TEXT] | resume RUN | abort RUN --reason TEXT
     flowstate status RUN | events RUN [--tail N] [--type T ...]
 
@@ -56,7 +56,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("advance", parents=[common], help="run until a situation needs a decision")
     p.add_argument("run")
-    p.add_argument("--max-wait", type=float, help="return worker_running after this many seconds")
+    p.add_argument("--max-wait", type=float,
+                   help="return worker_running / script_running / branches_running after this many seconds")
     p.add_argument("--stall-after", type=float, help="override stall threshold for this call")
 
     p = sub.add_parser("retry", parents=[common], help="retry a failed node (same worker conversation)")

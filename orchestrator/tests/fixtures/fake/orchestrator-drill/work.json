@@ -1,0 +1,29 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "step", "regex": "(?m)^Step: (.+)$"}},
+        {"capture": {"name": "branch", "regex": "(?m)^Branch: (.+)$"}},
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"unless": "(?m)^Step: sort-tools$",
+         "write": {"path": "${out}", "json": {
+           "_session_id": "${session_id}", "step": "${step}", "branch_id": "${branch}", "done": true}}},
+        {"when": "(?m)^Step: sort-tools$",
+         "write": {"path": "${out}", "json": {
+           "_session_id": "${session_id}", "step": "${step}", "branch_id": "${branch}", "done": "yes"}}}
+      ],
+      "result": "reported ${step}"
+    },
+    {
+      "steps": [
+        {"capture": {"name": "out", "regex": "(\\S+/branches/(?:[^/\\s]+)/report\\.json)"}},
+        {"capture": {"name": "branch", "regex": "/branches/([^/\\s]+)/report\\.json"}},
+        {"text": "retry ${invocation}: writing done as a boolean"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}", "step": "sort-tools", "branch_id": "${branch}", "done": true}}}
+      ],
+      "result": "fixed the report"
+    }
+  ]
+}

@@ -70,6 +70,9 @@ def situation(state: dict, kind: str, node_id: str | None = None, scope: Scope =
         ns = scope.node(state, node_id)
         sit.update(node=node_id, node_kind=ns["kind"], attempt=len(ns.get("attempts") or []),
                    retries_used=ns.get("retries_used", 0))
+        if "max_retries" in ns:  # the same budget retry/respawn enforce; never recompute it elsewhere
+            sit.update(max_retries=ns["max_retries"],
+                       retries_remaining=max(0, ns["max_retries"] - ns.get("retries_used", 0)))
         if ns["kind"] != "agent":
             options = [o for o in options if o != "respawn"]
     if isinstance(details.get("errors"), list):

@@ -1,0 +1,40 @@
+# Companion schema for orchestrator-drill.dot.
+output_schemas:
+  plan_outputs:
+    files:
+      - name: plan
+        path: "{_run_artefact_dir}/plan.json"
+        definition: plan
+    sets_variables:
+      plan: plan
+      steps: {file: plan, pointer: /steps}
+
+  work_outputs:
+    files:
+      - name: report
+        path: "{_run_artefact_dir}/report.json"
+        definition: report
+    sets_variables:
+      report: report
+
+  finish_outputs:
+    files:
+      - name: summary
+        path: "{_run_artefact_dir}/summary.json"
+        definition: summary
+    sets_variables:
+      summary: summary
+
+variables:
+  goal:
+    type: string
+    default: "tidy the workshop"
+  plan:
+    type: path
+  steps:
+    type: list
+  report:
+    type: path
+    description: Per branch, the step report; after the join, the list of them in branch order.
+  summary:
+    type: path

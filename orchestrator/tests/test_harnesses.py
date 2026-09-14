@@ -105,6 +105,19 @@ def test_fake_worker_is_deterministic_and_last_invocation_repeats(tmp_path):
     assert runs == ["first", "later 1", "later 5", "later 5"]
 
 
+def test_fake_worker_when_and_unless_select_steps_by_prompt(tmp_path):
+    script = {"invocations": [{"steps": [
+        {"when": "(?m)^Item: special$", "text": "special path"},
+        {"unless": "(?m)^Item: special$", "text": "normal path"},
+    ]}]}
+    for item, expected in (("special", "special path"), ("other", "normal path")):
+        proc, s = _run_fake(tmp_path, script, prompt=f"Item: {item}\n")
+        assert proc.returncode == 0
+        texts = [json.loads(l)["message"]["content"][0]["text"] for l in proc.stdout.splitlines()
+                 if json.loads(l)["type"] == "assistant"]
+        assert texts == [expected]
+
+
 def test_fake_worker_failure_modes(tmp_path):
     proc, s = _run_fake(tmp_path, {"invocations": [{"steps": [
         {"capture": {"name": "x", "regex": "absent"}}]}]})
