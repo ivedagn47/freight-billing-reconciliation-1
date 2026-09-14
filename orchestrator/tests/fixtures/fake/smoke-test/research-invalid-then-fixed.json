@@ -1,0 +1,34 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "topic", "regex": "(?m)^> (.+)$"}},
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"text": "first attempt: writing only one bullet (schema requires 3 to 5)"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "topic": "${topic}",
+          "bullets": ["Only one bullet about ${topic}."]
+        }}}
+      ],
+      "result": "wrote an invalid brief"
+    },
+    {
+      "steps": [
+        {"capture": {"name": "out", "regex": "(\\S+/research-brief\\.json)"}},
+        {"text": "retry ${invocation}: fixing the brief after flowstate feedback"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "topic": "fixed after retry",
+          "bullets": [
+            "Corrected bullet one.",
+            "Corrected bullet two.",
+            "Corrected bullet three."
+          ]
+        }}}
+      ],
+      "result": "fixed ${out}"
+    }
+  ]
+}

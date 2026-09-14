@@ -1,0 +1,23 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "topic", "regex": "(?m)^> (.+)$"}},
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"text": "researching ${topic}"},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "topic": "${topic}",
+          "bullets": [
+            "Fake research bullet one about ${topic}.",
+            "Fake research bullet two about ${topic}.",
+            "Fake research bullet three about ${topic}."
+          ]
+        }}}
+      ],
+      "num_turns": 2,
+      "result": "wrote ${out}"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "model": "fake",
+  "invocations": [
+    {
+      "steps": [
+        {"capture": {"name": "brief", "regex": "(?m)^> (\\S+)$"}},
+        {"capture": {"name": "out", "regex": "at exactly this path: (\\S+)"}},
+        {"write": {"path": "${out}", "json": {
+          "_session_id": "${session_id}",
+          "summary": "Fake summary of the brief at ${brief}. It exists to exercise the graph. It is deterministic."
+        }}}
+      ],
+      "result": "wrote ${out}"
+    }
+  ]
+}

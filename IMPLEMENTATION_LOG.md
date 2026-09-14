@@ -143,3 +143,136 @@ rather than changing the kit's `requirements.txt`.
 - `smoke-branch.dot` references missing `scripts/reduce.sh` (Phase 3).
 - Flowstate must check each agent output's `_session_id` against the id it assigned via agentctl.
 - Permission mode `auto` (used by the demo DOT files) worked for file writes in the worker cwd.
+
+---
+
+## Phase 2 — flowstate core runtime (2026-09-14)
+
+### Starting state and what the existing flows dictate
+
+- `orchestrator/lib/flowstate/` was empty; `bin/flowstate` runs `python -m flowstate` (not executable).
+- pydot facts: `graph [label=...]` is returned as a pseudo-node named `graph`; attribute values keep
+  their surrounding quotes; `//` comments parse fine. Neither demo flow uses edge conditions.
+- `research.md` says "write to `{research_brief}`" — a variable the same node only *sets*. So a
+  node's own `sets_variables` paths must be bound before it runs and committed only after
+  validation. `worker_a.sh` writing to `$FLOWSTATE_VAR_note_a` confirms the convention.
+- Both prompts ask for `"<your session id>"`, but a Claude worker is never told its session id, and
+  the schemas require `_session_id`. The runtime must supply it without editing the prompts.
+- `smoke-branch` uses `fork`/`join` (Phase 3) and references a missing `scripts/reduce.sh`.
+
+### What was built
+
+| Module | Responsibility |
+|---|---|
+| `loader.py`, `validate.py`, `model.py` | Parse DOT + flow.yml into typed nodes/edges/schemas; collect every static issue before a run |
+| `templating.py`, `conditions.py` | `{var}` / `{include:path}` rendering; hand-written condition parser/evaluator (no eval) |
+| `state.py` | Run layout, atomic `state.yaml` writes under a lock, append-only events, advance lease |
+| `engine.py` | init, the `advance` loop, finish → route → gates → commit, retry, respawn, pause/resume/abort, status/events |
+| `agent_node.py`, `script_node.py`, `gates.py`, `outputs.py`, `procs.py` | Node execution via agentctl or subprocess, gate runs, output validation/binding/snapshots |
+| `runtime.py` | Situation shape and options, retry feedback message, prompt footer, flow-digest check |
+| `cli.py`, `paths.py` | JSON CLI; flow/run/prefs resolution |
+
+Run directory `runs/<run_id>/`: `state.yaml` (authoritative: run status, flow paths + digest, config,
+committed variables, cursor, per-node status/attempts/retries/output paths, pending situation, pause,
+abort), `events.jsonl`, `artefacts/`, `workers/` (the agentctl registry, so `workers/<node>/prompt.md`
+is the rendered prompt), and `logs/` (added: script stdout/stderr, gate evidence, rejected-output
+snapshots).
+
+### Decisions and why
+
+- **Adapt to the flows, never the reverse.** Node kind is inferred from existing syntax (`Mdiamond`,
+  `Msquare`, `prompt_template`, `runner=script`). Demo flows are unmodified.
+- **Session id via a runtime footer** appended to every rendered agent prompt ("Your session id is
+  … use exactly this string"), also available as `{_session_id}`. The `_session_id` check is
+  mandatory for every JSON output of an agent node: proof the file came from the worker flowstate
+  started. The real Claude run confirmed workers pick it up.
+- **Scripts and gates run through their `#!` interpreter** (falling back to the exec bit). The kit
+  committed them non-executable; this makes them work without changing file modes.
+- **Templating**: only `{identifier}` and `{include:relative/path}` are placeholders, so JSON examples
+  in prompts are untouched; no escape syntax exists, so literal text is never rewritten. Missing
+  values are errors. Includes are verbatim and confined to the flow directory.
+- **Conditions**: `== != < <= > >=` over variables and string/number/boolean/null literals, joined
+  by `and`/`or` (no parentheses). Booleans are not numbers; ordering needs two numbers or two
+  strings; unknown variables are errors. Demo flows use none, but routing needs values, so
+  `sets_variables` gained a `{file, pointer}` form (JSON pointer). The plain file-name form is unchanged.
+- **Routing before gates.** Conditions must select exactly one outgoing edge (zero → `no_route`,
+  several → `ambiguous_route`), and only that edge's gates run. Statically, a node with several
+  outgoing edges needs a condition on each; parallel fan-out is `runner=fork` (Phase 3).
+- **One atomic commit** after outputs exist → schema-valid → `_session_id` → bindings → route →
+  gates. Anything else is a persisted situation; rejected outputs are copied to
+  `logs/<node>/attempt-N/rejected/` and never committed.
+- **Persisted vs transient situations.** Situations needing a decision persist in `state.yaml` and
+  repeated `advance` calls return them without re-executing anything. `worker_running` (bounded by
+  `--max-wait`), `worker_stalled`, `worker_timeout`, `busy` and `flow_changed` are recomputed each
+  call, so "keep waiting" is just `advance --stall-after <longer>`.
+- **`advance --max-wait`** exists because the orchestrator agent's shell calls have timeouts (Claude
+  Code's Bash tool caps at 10 minutes); long workers are polled in bounded calls.
+- **One retry budget per node** shared by `retry` and `respawn` (`max_retries`, default 2 in prefs).
+  Exhaustion yields `retries_exhausted`, whose only option is abort.
+- **Retry** sends the errors, gate stderr, the required output paths, the session id and optional
+  orchestrator feedback into the *same* conversation via `agentctl send`. Listing output paths was
+  added after a test showed a worker cannot recover its paths from a message that omits them.
+  Script retry reruns the script.
+- **Respawn** kills a still-running worker, starts `<node>.respawn-N` with a new session and records
+  `replaces_worker_id` / `replaces_session_id`; old worker directory and output snapshot are kept.
+- **Crash safety.** An agent attempt is written with `launch: pending` before agentctl is called.
+  Recovery checks the registry (spawn) or the invocation count (retry) so nothing launches twice. A
+  script found mid-run with no recorded exit is `node_interrupted`, not silently rerun.
+- **Locks.** `.state.lock` guards every read-modify-write; `.advance.lock` is a non-blocking lease
+  for `advance`/`retry`/`respawn` (a second driver gets `busy`). `pause`/`abort`/`status` need no
+  lease, so an operator can stop a run mid-wait. Pause leaves workers running; abort kills them.
+- **Flow digest** (sha256 over DOT, flow.yml, prompts, scripts, gates, schemas, includes) is
+  recorded at init; a changed definition makes `advance` return `flow_changed`, because outputs
+  would no longer be reproducible from the recorded definition.
+- **Inferred semantics, documented as such:** `pause_at` is `never|optional|always`, `optional`
+  pausing only when prefs/`--supervision` is `high`. `factory-prefs.yml` is created from the example
+  on first use; extra keys `max_retries`, `stall_after_s`, `script_timeout_s` have defaults.
+- **Static validation** covers everything listed in the Phase 2 brief plus a dataflow pass (a
+  variable must be set on *every* path to its use). Joins use the union of their branches and a
+  join's `summary_var` counts as produced, so smoke-branch now reports only the true Phase 2 gaps
+  (`unsupported_runner`, missing `reduce.sh`). Cycles are rejected for now.
+- **Fake harness per run**: `init --harness fake --fake-script NODE=PATH`; flow files stay unchanged.
+
+### Tests
+
+98 tests, all passing, no tokens: 21 from Phase 1 plus 77 for flowstate — language (25: templating,
+includes, conditions including rejection of `__import__`, calls, `=`, parentheses), loader (24: the
+real smoke-test loads as-is; smoke-branch reports only Phase 3 gaps; 19 targeted static-validation
+failures), engine (28: init layout and input errors, script success/failure/retry, gate failure
+blocks commit, invalid output never moves downstream, condition routing and `no_route`,
+interrupted script, flow change, advance lease, CLI JSON; and via agentctl + fake harness + tmux:
+smoke-test end to end with exact event sequence, validation_failed → retry in the same conversation,
+`_session_id` mismatch, respawn with old/new sessions, retry budget, worker failure → retry, stall →
+respawn kills the old worker, pause/resume and `pause_at` under high supervision, abort kills
+workers, recovery in a new CLI process without duplicate work, crash between recording and spawning).
+
+### Smoke tests
+
+- **Fake harness, unchanged smoke-test flow**: completed; events `run_created → node_started/
+  node_completed (start) → node_started, worker_started, worker_completed, outputs_validated,
+  gate_passed, node_completed (research) → same for summarise (no gate) → run_completed`.
+- **Forced validation failure** (fake research worker writes 1 bullet, schema needs 3–5):
+  `advance` → `validation_failed` (`/bullets … is too short`, rejected output snapshotted) → repeated
+  `advance` returns the same situation without re-running → `retry --feedback` → agentctl shows one
+  worker, 2 invocations, 1 session id → `advance` → completed.
+- **Real Claude** (`runs/_phase2-smoke/claude-smoke-20260914-180252`, flow unchanged, `sonnet`,
+  permission mode `auto`): completed. Both workers (`claude-sonnet-5`) wrote schema-valid outputs
+  whose `_session_id` matched the id flowstate assigned; the gate ran through `/bin/bash`; init
+  events show only file tools, 0 skills, `memory_paths: null`. Cost $0.0239 + $0.0245.
+
+### Deviations from the plan
+
+- Added `runs/<run_id>/logs/` next to the four planned entries.
+- `sets_variables` `{file, pointer}` form; `and`/`or` in conditions.
+- Situations split into persisted and transient; `advance --max-wait`.
+- `retry` and `respawn` share one budget; flow-digest check added.
+- Cycles rejected (the plan did not specify).
+
+### Known limitations (carried forward)
+
+- No fork/join/dynamic_fanout (Phase 3); one cursor, acyclic graphs only.
+- Script nodes run inside the `advance` process, so a crash mid-script needs an explicit retry.
+- Stall detection covers agent workers only; gate timeout is a fixed 120 s.
+- Output validation assumes JSON files with schemas; non-JSON outputs (e.g. memos) need an
+  extension in Phase 6.
+- The graph-orchestrator skill that responds to situations does not exist yet (Phase 4).
