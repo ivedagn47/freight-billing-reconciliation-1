@@ -1,0 +1,18 @@
+# Carrier master data: which contract governs each carrier and which invoice formats it sends.
+# Adding a carrier = one entry here (+ a parser in freight/parsers/ only if its format is new).
+carriers:
+  alpine:
+    name: Alpine Express Logistics
+    contract: data/contracts/alpine-express.md
+    consignment_prefix: "AE-"
+    invoice_formats: [alpine-json]
+  falcon:
+    name: Falcon Freight Pvt Ltd
+    contract: data/contracts/falcon-freight.md
+    consignment_prefix: "FF-"
+    invoice_formats: [falcon-text]
+  sagar:
+    name: Sagar Roadlines
+    contract: data/contracts/sagar-roadlines.md
+    consignment_prefix: "SG-"
+    invoice_formats: [sagar-csv]

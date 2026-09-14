@@ -644,3 +644,134 @@ In both final runs the orchestrator still made one plain read-only `find` call f
   permission settings.
 - Nothing stops an orchestrator from *reading* `state.yaml`; the skill only forbids writing it.
 - Live tests cost about $0.20–0.26 per scenario and are not part of pytest.
+
+---
+
+## Phase 5 — deterministic freight code layer (2026-09-14)
+
+### Scope and starting state
+
+Per the plan, Phase 5 covers discovery, parsers, the clause index, the rate-spec format and pricing
+engine, the disposition policy, report assembly, and their tests. There are no agent nodes and no
+flow wiring (those are Phases 6–7), and no real rate specs: those come from the Phase 6 extraction
+agents. The format inspection covered all 17 invoice documents before any parser was written:
+- **Alpine JSON:** one schema with `discount`, `consignment_count` and a generic `handling_fee`.
+- **Falcon text:** invoice and credit-note headers, per-consignment blocks, three charge labels, and
+  free-text corrections on the credit note.
+- **Sagar CSV:** an invoice layout with a `TOTAL` row and no invoice id, plus a separate credit-note layout.
+
+### Where it lives
+
+`factory/flows/freight-reconciliation/`: the `freight/` package, `config/carriers.yml`, `config/policy.yml`,
+`definitions/rate-spec.json`, `tests/` and `pytest.ini`. The flow's DOT and flow.yml arrive in Phase 7.
+
+### What was built
+
+| Module | Responsibility |
+|---|---|
+| `money.py`, `vocab.py` | Exact INR Decimal arithmetic; the shared charge-code vocabulary and the shipment fields a spec may use |
+| `parsers/` (`alpine_json`, `falcon_text`, `sagar_csv`, registry) | Strict format adapters producing normalized documents with integrity facts |
+| `documents.py` | Carrier config validation, discovery, and the scope manifest |
+| `contracts.py` | Clause index: clauses, sections, agreement ref, term, and the numbers in each clause |
+| `ratespec.py` + `definitions/rate-spec.json` | Rate-spec schema and semantic checks, band membership, `pricing_view`, `cited_clauses` |
+| `pricing.py` | Shipment matching, spec evaluation, flags, credit notes, invoice-level findings |
+| `policy.py` + `config/policy.yml` | Flag effects → a disposition, or a bounded judgement |
+| `report.py` | Report assembly, deterministic justifications, invariant verification, memo item list |
+| `cli.py` | `discover`, `clauses`, `check-spec`, `price`, `assemble` for the Phase 7 script nodes |
+
+### Decisions and why
+
+- **Prices come only from shipment records and a rate spec.** Weight, distance and service as stated on
+  the invoice are kept as evidence and compared (`ATTRIBUTE_MISMATCH`), never used to price.
+- **Exact arithmetic.** Decimal throughout, decimal strings in JSON. Components are summed exactly and
+  the line total is rounded once, half-up. The tolerance (`0.01`) is policy, not code.
+- **Strict parsers.** Unrecognised text, headers, totals, dates or formats raise `ParseError`, and an
+  orchestrator should pause on that rather than guess. Document-internal inconsistencies are recorded
+  as integrity facts, never corrected. On the real data these facts include a line-arithmetic failure
+  in three Sagar invoices (reported, not interpreted).
+- **Shared charge vocabulary.** Parsers map each carrier's labels to `CHARGE_CODES`, and spec components
+  declare which codes they account for. That gives three distinct outcomes: `UNCONTRACTED_CHARGE` (a
+  known charge the contract does not provide for), `UNRECOGNIZED_CHARGE` (the parser could not classify
+  it), and `CHARGE_NOT_APPLICABLE` (a contracted charge whose condition the shipment does not meet).
+- **Carrier master config.** Formats map to carriers, and carriers to contracts and consignment
+  prefixes. Adding a carrier means one config entry, plus a parser only if its format is new.
+- **Discovery parses everything.** Scope follows the rule confirmed before implementation. Reference
+  documents are kept so duplicate billing is detected across periods. Documents whose period cannot be
+  established are `unresolved`, never dropped.
+- **The clause index records structure and numbers, not meaning.** It supports clause citations, and in
+  Phase 6 the tracing check that every spec number appears in the clause it cites.
+- **The rate spec is a closed set of building blocks.**
+  - Quantities `max`/`min`; components `flat` / `per_unit` / `banded_rate` / `percent_of` (earlier
+    components only); shipment conditions `service_level`, `special_handling_includes` and
+    `all`/`any`/`not`.
+  - Allowed service levels, a term, invoice discounts gated on consignments in the billing month, and
+    informational gaps.
+  - Semantic checks cover name uniqueness, reference ordering, non-overlapping non-empty bands and the
+    term's order.
+  - Bands keep the contract's wording. A value in no band is a `CONTRACT_GAP` if it falls between
+    bands, or `OUTSIDE_RATE_CARD` if it is beyond all of them; it is never snapped to a band.
+  - `pricing_view()` removes citations, descriptions and gaps, and normalises numbers, for the Phase 6
+    agreement check.
+- **Credit notes** follow the confirmed rule. When several credits correct the same line, earlier
+  credits are subtracted (ordered by issue date). The original line is flagged `CREDIT_NOTE_OFFSET`.
+  Policy then accepts the original, and the credit line carries the residual: dispute if under-credited,
+  accept with a note if over-credited. `report.verify` rejects any disputed line that is offset, so no
+  rupee is counted twice.
+- **Policy combination.** Escalate > offset > dispute > base outcome. A `judgement` flag turns the
+  result into `[outcome, escalate]` for an adjudicator, who can only choose between those and cannot
+  change amounts. Every flag must have a policy entry and unknown flags fail closed.
+- **Report.** Dispositions come only from policy or from bounded adjudications. Justifications for
+  policy-decided lines are generated from amounts and flag messages with sorted clause citations.
+  `verify()` recomputes everything and validates `report.schema.json`.
+
+### Interpretations to review (made explicit in policy.yml and the code)
+
+These are business judgement calls, recorded here for `DESIGN.md`:
+- **Volume discount.** Computed on the contract-correct (expected) line total. Consignments are counted
+  from `shipments.json` by carrier and ship-date month, including shipments not yet delivered.
+- **Duplicate billing.** The earliest billing (period, period start, document, line) is payable; each
+  later one expects 0 and is disputed.
+- **Uncontracted vs unrecognised charges.** An uncontracted but recognised charge is disputed; an
+  unrecognised label is escalated.
+- **Adjudication.** Not-delivered shipments, service levels the contract does not offer, and invoices
+  whose own charges do not add up go to an adjudicator.
+- **Invoice total mismatch.** A stated invoice total that differs from the invoice's own lines is
+  disputed when it overcharges and accepted otherwise.
+- **Report summary fields.** `counts_by_disposition` counts lines only, and `total_billed` includes
+  credit notes as negative totals.
+- **Credit-line clauses.** A credit-note line cites the clauses behind its original line's expected
+  amount.
+
+### Tests
+
+109 freight tests pass without tokens, plus the unchanged 153 orchestrator tests.
+
+| File | Tests | Coverage |
+|---|---|---|
+| `test_money_and_contracts.py` | 21 | Amounts, rounding, synthetic clause index, malformed contracts, real-contract structure |
+| `test_parsers_and_discovery.py` | 17 | Exact synthetic parses of every format, parser strictness, unknown formats, carrier config, the scope rule on synthetic documents, real-file structure, and the real July scope |
+| `test_ratespec.py` | 24 | Schema vocabulary alignment, 14 invalid specs, band semantics, `pricing_view`, citations |
+| `test_pricing_policy.py` | 32 | Evaluation and rounding, gaps, missing data, every line flag, cross-period duplicates, four credit-note cases, unresolved credits, adjustment and total findings, refused inputs, the policy combination table, failing closed |
+| `test_report_cli.py` | 15 | Valid report with each disputed rupee counted once, bounded adjudications, 9 tampering cases caught by `verify`, CLI end to end on synthetic files |
+
+The real data is used only for structure: parsing, ids, periods, line counts, clause numbers, and the
+scope rule. No test prices real data or encodes a reconciliation answer.
+
+### Surprises
+
+- A synthetic sanity run caught a keyword collision in `pricing.flag()`: a `code` detail clashed with
+  the flag code parameter.
+- One test expectation missed that a 5.00 charge billed against a 110.00 contract amount is also
+  `UNDERBILLED`. The engine was right; the test was fixed.
+
+### Known limitations
+
+- **Formats:** only the three observed formats are supported; anything else stops discovery.
+- **Evidence comparison:** only weight, distance and service are compared, not route cities.
+- **Shipment conditions:** these cover service level and special handling only; a contract term needing
+  other shipment facts would need the rate-spec format extended, and would fail validation until then.
+- **Flow digest:** flowstate's flow digest covers the scripts a flow references, not the `freight`
+  package they import. Phase 7 must record the package's hash so a code change mid-run is detected.
+- **Placeholder interfaces:** the adjudication input (`{item_id: {disposition, justification,
+  contract_clause}}`) and `memo_items()` are placeholders for Phase 6 agents.
+- **Untested at scale:** the code is pure Python and linear in lines, but not measured beyond the sample.

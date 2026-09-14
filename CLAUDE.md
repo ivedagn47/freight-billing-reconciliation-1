@@ -31,7 +31,10 @@ phase's decisions and is the source for `DESIGN.md`.
   graphs with start/done, agent and script nodes, gates, conditions, `fork`, `join` (with reducers)
   and `dynamic_fanout`. Nested fork/fan-out regions are rejected.
 - `.claude/skills/graph-orchestrator/` — **implemented (Phase 4)**, see "graph-orchestrator skill"
-  below. No freight-specific flow or skill exists yet (Phase 5+).
+  below.
+- `factory/flows/freight-reconciliation/` — **deterministic code layer implemented (Phase 5)**, see
+  "Freight code layer" below. No DOT/flow.yml, agent prompts or reconcile skill yet (Phases 6–7), and
+  no real rate specs: those are produced by agent nodes in Phase 6.
 - Kit shell files were committed without the executable bit. Both `bin/` wrappers are fixed; flowstate
   runs flow scripts, gates and reducers through their `#!` interpreter, so the rest work unchanged.
 - `smoke-branch/scripts/reduce.sh` was missing from the kit and has been added as a minimal fixture.
@@ -56,6 +59,10 @@ orchestrator/tests/live/smoke_claude_worker.sh        # real Claude worker via t
 orchestrator/.venv/bin/python orchestrator/tests/live/probe_isolation.py  # re-verify worker isolation
 SCENARIO=recover orchestrator/tests/live/orchestrate_drill.sh   # real Claude orchestrator + skill (~$0.20)
 SCENARIO=pause orchestrator/tests/live/orchestrate_drill.sh
+
+# freight code layer (separate suite, same venv)
+(cd factory/flows/freight-reconciliation && ../../../orchestrator/.venv/bin/python -m pytest)
+PYTHONPATH=factory/flows/freight-reconciliation orchestrator/.venv/bin/python -m freight --help
 ```
 
 Lifecycle and agent-node tests need a working `tmux`; several flow scripts need `jq`. Scratch runs go
@@ -217,6 +224,48 @@ means and picks the next Flowstate command. It contains no domain logic.
   tool, with Bash pre-approved only for `orchestrator/bin/flowstate` in `dontAsk` mode (mutating shell
   commands are denied; read-only ones still run).
 
+## Freight code layer
+
+`factory/flows/freight-reconciliation/`: `freight/` (Python package), `config/carriers.yml` (carrier →
+contract, consignment prefix, invoice formats), `config/policy.yml` (flag → disposition effects),
+`definitions/rate-spec.json`, `tests/`. CLI for script nodes: `python -m freight {discover, clauses,
+check-spec, price, assemble}` (JSON out; errors exit 1).
+
+- **Money** (`money.py`): Decimal everywhere, decimal strings in JSON, half-up to the paisa once per
+  line total. Tolerance lives in policy.yml.
+- **Parsers** (`parsers/`): one strict adapter per format (`alpine-json`, `falcon-text`, `sagar-csv`) →
+  normalized documents (lines, charges mapped to `vocab.CHARGE_CODES`, invoice-stated attributes kept
+  as evidence only, stated totals, integrity facts). Unknown text or formats raise `ParseError`.
+  Sagar invoices have no id in the file: id from the file name, period from booking dates.
+- **Discovery** (`documents.py`): parses every file; scope = invoices whose billing period is the run's
+  period + credit notes correcting them; everything else is `reference` (used for cross-period
+  duplicate detection) or `unresolved`, each with a reason.
+- **Clause index** (`contracts.py`): numbered clauses, sections, agreement ref, term dates and the
+  numbers in each clause — for citations and Phase 6 grounding. It never interprets prices.
+- **Rate spec** (`ratespec.py`, `definitions/rate-spec.json`): pricing rules as data — quantities
+  (`max`/`min`), components (`flat`, `per_unit`, `banded_rate`, `percent_of` earlier components) with
+  shipment conditions and the charge codes they account for, allowed service levels, invoice
+  discounts gated on consignments in the billing month, term, gaps. Bands keep the contract's
+  inclusive/exclusive ends; values in no band are never snapped. `pricing_view()` strips citations
+  and wording for comparing two independent extractions.
+- **Pricing** (`pricing.py`): prices from `shipments.json` + spec only; flags: `NO_SHIPMENT_MATCH`,
+  `SHIPMENT_AMBIGUOUS`, `SHIPMENT_DATA_MISSING`, `CARRIER_MISMATCH`, `OUTSIDE_TERM`, `CONTRACT_GAP`,
+  `OUTSIDE_RATE_CARD`, `UNRECOGNIZED_CHARGE`, `UNCONTRACTED_CHARGE`, `CHARGE_NOT_APPLICABLE`,
+  `DUPLICATE_BILLING` (earliest billing across all periods wins; later ones expect 0),
+  `SERVICE_NOT_OFFERED`, `NOT_DELIVERED`, `COMPONENT_ARITHMETIC`, `ATTRIBUTE_MISMATCH`, `UNDERBILLED`,
+  credit-note flags. Credit line expected = original expected − original billed − earlier credits;
+  the original is flagged `CREDIT_NOTE_OFFSET`. Invoice findings: `ADJUSTMENT_MISMATCH`,
+  `ADJUSTMENT_UNDETERMINED`, `INVOICE_TOTAL_MISMATCH`.
+- **Policy** (`policy.py`): effects escalate > offset > dispute > base (dispute if billed − expected >
+  tolerance, else accept); a `judgement` flag turns the result into `[outcome, escalate]` for
+  adjudication. Unknown flags or missing policy entries fail closed.
+- **Report** (`report.py`): dispositions only from policy or from adjudications restricted to the
+  offered options; deterministic justifications with clause citations; `verify()` enforces
+  `report.schema.json`, one row per in-scope line, delta = billed − expected, recomputed totals,
+  no disputed line offset by a credit note (each rupee counted once), and policy-allowed dispositions.
+- **Tests**: real data only for structure and the scope rule; every pricing expectation uses the
+  synthetic `acme` carrier in `tests/synthetic.py`.
+
 ## Flow file architecture (DOT + flow.yml)
 
 A flow is two files per directory, `factory/flows/<name>/<name>.dot` and
@@ -255,12 +304,11 @@ Demo flows:
   sagar-roadlines). **The contracts are the sole authority on what anything should cost** — expected
   amounts and dispute/escalate justifications must trace back to a specific clause
   (`contract_clause` field in the report schema).
-- `data/invoices/` — five July 2026 invoices, one per carrier billing cycle, in three different
-  native formats: Alpine as JSON (`ALPINE-*.json`), Falcon as free-text tax-invoice layout
-  (`FALCON-*.txt`), Sagar as CSV (`SAGAR-*.csv`). Each carrier's format is internally consistent but
-  differs from the others — normalizing these into a common line-item shape before matching against
-  contracts/shipments is a core part of the design. Credit notes (`FALCON-CN-01.txt`,
-  `SAGAR-CN-01.csv`) are also present and need handling.
+- `data/invoices/` — 17 documents for July–September 2026 in three native formats: Alpine as JSON
+  (`ALPINE-*.json`), Falcon as fixed-layout text (`FALCON-*.txt`, fortnightly), Sagar as CSV
+  (`SAGAR-*.csv`, fortnightly). The five July invoices (`ALPINE-0726`, `FALCON-2026-07A/B`,
+  `SAGAR-JUL-1/2`) plus `FALCON-CN-01` (credit note against `FALCON-2026-07A`) are the July scope;
+  `SAGAR-CN-01` corrects an August invoice and is out of scope. Other months are reference data.
 
 ## Output contract (`report.schema.json`)
 

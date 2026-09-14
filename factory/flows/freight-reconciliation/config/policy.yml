@@ -1,0 +1,40 @@
+# Disposition policy: how pricing flags become dispositions. Deterministic; reviewed like code.
+#
+# Line flag effects, strongest first:
+#   escalate   the line is escalated for a human; nothing else can change that
+#   offset     the line's difference is carried by its in-scope credit-note line; this line is accepted
+#   dispute    the line is disputed (e.g. the contract gives nothing for a billed charge)
+#   judgement  an adjudicator chooses between the outcome so far and escalate
+#   info       recorded for justification and memos only
+# Without flags, a line is disputed when billed exceeds expected by more than the tolerance and
+# accepted otherwise (underbilling is accepted with a note; the expected amount is unchanged).
+tolerance_inr: "0.01"
+
+line_flags:
+  NO_SHIPMENT_MATCH: escalate          # cannot price a consignment BlueFin has no record of
+  SHIPMENT_AMBIGUOUS: escalate
+  SHIPMENT_DATA_MISSING: escalate
+  CARRIER_MISMATCH: escalate
+  OUTSIDE_TERM: escalate               # the agreement does not govern the shipment date
+  CONTRACT_GAP: escalate               # no rate band covers the value: the contract does not determine a price
+  OUTSIDE_RATE_CARD: escalate          # beyond the rate card (e.g. "quoted case by case")
+  UNRECOGNIZED_CHARGE: escalate        # the parser could not classify a charge
+  CREDIT_NOTE_UNMATCHED: escalate
+  CREDIT_NOTE_UNDETERMINED: escalate
+  CREDIT_NOTE_OFFSET: offset
+  DUPLICATE_BILLING: dispute           # expected amount is zero for every billing after the first
+  UNCONTRACTED_CHARGE: dispute         # expected amount excludes the charge
+  SERVICE_NOT_OFFERED: judgement
+  NOT_DELIVERED: judgement
+  COMPONENT_ARITHMETIC: judgement      # the invoice's own charges do not add up to its line total
+  CREDIT_NOTE: info
+  CHARGE_NOT_APPLICABLE: info          # the difference itself drives the dispute
+  ATTRIBUTE_MISMATCH: info
+  UNDERBILLED: info
+
+# Invoice-level findings: disposition by direction of the amount impact
+# (over = BlueFin was charged more than the contract allows).
+invoice_findings:
+  ADJUSTMENT_MISMATCH: {over: dispute, under: accept}
+  ADJUSTMENT_UNDETERMINED: {undetermined: escalate}
+  INVOICE_TOTAL_MISMATCH: {over: dispute, under: accept}
