@@ -1,0 +1,65 @@
+{
+  "memos_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memos",
+  "memos": [
+    {
+      "memo_id": "ALPINE-0726-line-005",
+      "file": "ALPINE-0726-line-005.md",
+      "kind": "line",
+      "invoice": "ALPINE-0726",
+      "disposition": "escalate",
+      "item": "ALPINE-0726#5",
+      "batch_id": "memo-001",
+      "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88"
+    },
+    {
+      "memo_id": "FALCON-2026-07A-line-011",
+      "file": "FALCON-2026-07A-line-011.md",
+      "kind": "line",
+      "invoice": "FALCON-2026-07A",
+      "disposition": "dispute",
+      "item": "FALCON-2026-07A#11",
+      "batch_id": "memo-001",
+      "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88"
+    },
+    {
+      "memo_id": "FALCON-2026-07B-line-008",
+      "file": "FALCON-2026-07B-line-008.md",
+      "kind": "line",
+      "invoice": "FALCON-2026-07B",
+      "disposition": "dispute",
+      "item": "FALCON-2026-07B#8",
+      "batch_id": "memo-001",
+      "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88"
+    },
+    {
+      "memo_id": "SAGAR-JUL-1-line-003",
+      "file": "SAGAR-JUL-1-line-003.md",
+      "kind": "line",
+      "invoice": "SAGAR-JUL-1",
+      "disposition": "dispute",
+      "item": "SAGAR-JUL-1#3",
+      "batch_id": "memo-001",
+      "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88"
+    },
+    {
+      "memo_id": "SAGAR-JUL-1-line-009",
+      "file": "SAGAR-JUL-1-line-009.md",
+      "kind": "line",
+      "invoice": "SAGAR-JUL-1",
+      "disposition": "dispute",
+      "item": "SAGAR-JUL-1#9",
+      "batch_id": "memo-001",
+      "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88"
+    },
+    {
+      "memo_id": "ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13",
+      "file": "ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13.md",
+      "kind": "finding",
+      "invoice": "ALPINE-0726",
+      "disposition": "escalate",
+      "item": "ALPINE-0726!ADJUSTMENT_UNDETERMINED!discount-5pct-from-13",
+      "batch_id": "memo-001",
+      "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88"
+    }
+  ]
+}

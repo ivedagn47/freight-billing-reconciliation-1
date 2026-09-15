@@ -1,0 +1,45 @@
+{
+  "doc_id": "FALCON-CN-01",
+  "id_source": "document",
+  "doc_type": "credit_note",
+  "format": "falcon-text",
+  "carrier": "falcon",
+  "source_file": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/invoices/FALCON-CN-01.txt",
+  "source_sha256": "665f47549d16c4ceaeebc9c26d465bc281a5ad67e11e2388e9ae118af1c3ae98",
+  "billing_period": null,
+  "period": null,
+  "issue_date": "2026-08-05",
+  "against_invoice": "FALCON-2026-07A",
+  "agreement_ref": null,
+  "stated": {
+    "total": "-496.80",
+    "line_count": null,
+    "discount": null
+  },
+  "lines": [
+    {
+      "line_no": 1,
+      "consignment_ref": "FF-8005",
+      "booking_date": null,
+      "attributes": {},
+      "charges": [
+        {
+          "code": "credit",
+          "label": "credit",
+          "amount": "-496.80",
+          "derived": true
+        }
+      ],
+      "stated_total": "-496.80",
+      "note": "Correction: fuel surcharge invoiced at 15% in error; contractual rate is 12%. Credit for the difference.",
+      "source": {
+        "first_line": 6,
+        "last_line": 9
+      }
+    }
+  ],
+  "integrity": {
+    "checks": 4,
+    "failures": []
+  }
+}

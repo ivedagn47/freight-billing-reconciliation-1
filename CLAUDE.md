@@ -32,10 +32,14 @@ phase's decisions and is the source for `DESIGN.md`.
   and `dynamic_fanout`. Nested fork/fan-out regions are rejected.
 - `.claude/skills/graph-orchestrator/` — **implemented (Phase 4)**, see "graph-orchestrator skill"
   below.
-- `factory/flows/freight-reconciliation/` — **implemented through Phase 7**: the deterministic code layer
-  (Phase 5), the agent nodes (Phase 6), and the wired `freight-reconciliation` flow with the
-  `.claude/skills/reconcile-freight/` entry skill (Phase 7); see "Freight code layer", "Freight agent nodes"
-  and "Reconciliation flow" below. The final run, committed evidence and DESIGN.md are Phase 8.
+- `factory/flows/freight-reconciliation/` — **complete**: the deterministic code layer (Phase 5), the agent
+  nodes (Phase 6), and the wired `freight-reconciliation` flow with the `.claude/skills/reconcile-freight/`
+  entry skill (Phase 7); see "Freight code layer", "Freight agent nodes" and "Reconciliation flow" below.
+- **Deliverables (Phase 8)**: `reconciliation-report.json` and `memos/` at the repository root were published by
+  run `freight-2026-07`, whose evidence is committed: `runs/freight-2026-07/` (state, events, artefacts,
+  worker transcripts, logs) and `runs/freight-2026-07.orchestrator/` (the orchestrator session). `DESIGN.md`
+  holds the design notes. Never edit the deliverables or the committed run by hand; re-run the flow instead.
+  Scratch runs stay under `runs/_*/` (gitignored).
 - Kit shell files were committed without the executable bit. Both `bin/` wrappers are fixed; flowstate
   runs flow scripts, gates and reducers through their `#!` interpreter, so the rest work unchanged.
 - `smoke-branch/scripts/reduce.sh` was missing from the kit and has been added as a minimal fixture.

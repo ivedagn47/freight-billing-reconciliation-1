@@ -1,0 +1,84 @@
+{
+  "round": 1,
+  "carriers": {
+    "alpine": {
+      "round": 1,
+      "copies": [
+        {
+          "copy": "a",
+          "path": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000/rate-spec.json",
+          "session_id": "4f02bef8-ad45-4603-a6ef-bc0fce129177",
+          "sha256": "9d922c416d4491a45f807f01066b9f5bd18326c718f51c374bb00c032545a809"
+        },
+        {
+          "copy": "b",
+          "path": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001/rate-spec.json",
+          "session_id": "0b407419-4011-42c3-a900-90dde701c4ed",
+          "sha256": "6e8fed97278c2503d07e6ee51c9bff401245ba3fa5f65cbf12ce0bf4504de72f"
+        }
+      ],
+      "comparison": {
+        "agree": true,
+        "probes": 144,
+        "differences_total": 0,
+        "differences": []
+      },
+      "status": "agreed",
+      "adopted_copy": "a",
+      "spec": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/alpine.json"
+    },
+    "falcon": {
+      "round": 1,
+      "copies": [
+        {
+          "copy": "a",
+          "path": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0002/rate-spec.json",
+          "session_id": "f731b096-1191-4e5b-9936-0df14c821c81",
+          "sha256": "b10fe52dc6eee64aedaa8bdb19f92a30b254d683e773c3da13fba2bdd94bedf5"
+        },
+        {
+          "copy": "b",
+          "path": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0003/rate-spec.json",
+          "session_id": "d424c9e2-9a24-4eca-9fe1-eecfd63f7c96",
+          "sha256": "4fcdc99631e27e8fa0c15a3c480261799271fd6ae4e1e548d37b3b421ea24b58"
+        }
+      ],
+      "comparison": {
+        "agree": true,
+        "probes": 2304,
+        "differences_total": 0,
+        "differences": []
+      },
+      "status": "agreed",
+      "adopted_copy": "a",
+      "spec": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/falcon.json"
+    },
+    "sagar": {
+      "round": 1,
+      "copies": [
+        {
+          "copy": "a",
+          "path": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004/rate-spec.json",
+          "session_id": "fb1f97c2-b068-441c-b9e1-07da6d70e9b1",
+          "sha256": "eb8f94b212f713e4a8b8b65bd1754b3165666abaa599cd1b9a428695238b1116"
+        },
+        {
+          "copy": "b",
+          "path": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0005/rate-spec.json",
+          "session_id": "928ac233-a2db-403b-92ce-5112f41b3059",
+          "sha256": "c6677e9914480ab71483e6e9a2624995f51919fddf2c9d5446b2a62a19d75ffe"
+        }
+      ],
+      "comparison": {
+        "agree": true,
+        "probes": 144,
+        "differences_total": 0,
+        "differences": []
+      },
+      "status": "agreed",
+      "adopted_copy": "a",
+      "spec": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/sagar.json"
+    }
+  },
+  "rerun_items": []
+}

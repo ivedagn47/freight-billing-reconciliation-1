@@ -1,0 +1,16 @@
+{
+  "batch_size": 10,
+  "items": 1,
+  "batches": [
+    {
+      "batch_id": "adj-001",
+      "packet": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/packets/adj-001.json",
+      "item_ids": [
+        "SAGAR-JUL-1#3"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/packets/adj-001.json"
+      ]
+    }
+  ]
+}

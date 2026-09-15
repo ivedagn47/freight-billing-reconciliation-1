@@ -1,0 +1,226 @@
+{
+  "format_version": "1-3aa39c5316312767",
+  "prompt_version": "dd4be4fa255df2f9",
+  "cache_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/_cache/rate-specs",
+  "use_cache": false,
+  "clauses_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses",
+  "vocabulary": {
+    "service_level": [
+      "express",
+      "standard"
+    ],
+    "special_handling": [
+      "cold_chain",
+      "fragile",
+      "residential"
+    ]
+  },
+  "carriers": {
+    "alpine": {
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md",
+      "contract_sha256": "caa39649f701795356f6545c0a6c86ea12b2037dc96080027bdf8f17801e6001",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json",
+      "invoice_charge_codes": [
+        "freight",
+        "handling"
+      ],
+      "cache_key": "fb2e6b5ee3ecf34a998a5cc5f2a9296ff0067bf1426098068b2bf95ec18875b1",
+      "cache": "disabled",
+      "spec": null
+    },
+    "falcon": {
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md",
+      "contract_sha256": "6e37557aad7f22da8103e960de6807385088ff0f4bca6fe8da22726998233ca0",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json",
+      "invoice_charge_codes": [
+        "detention",
+        "express_premium",
+        "freight",
+        "freight_incl_fuel",
+        "fuel_surcharge",
+        "residential_delivery"
+      ],
+      "cache_key": "36944f1686a75c68c4e7e0d9cea0866d02cd7708cf329d03a0b6f0404cafa8ea",
+      "cache": "disabled",
+      "spec": null
+    },
+    "sagar": {
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md",
+      "contract_sha256": "43c3f2dfc4e0eade16e79d4924f4b83c8748dc1a06dfaf3bc2694369aaa5ad95",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json",
+      "invoice_charge_codes": [
+        "cold_chain_premium",
+        "freight"
+      ],
+      "cache_key": "7a11820d5cd478d3807c0dea8380d1758ff5408d42a2fabb2e06e352c6d3dbc0",
+      "cache": "disabled",
+      "spec": null
+    }
+  },
+  "extraction_items": [
+    {
+      "carrier": "alpine",
+      "copy": "a",
+      "round": 1,
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json",
+      "vocabulary": {
+        "service_level": [
+          "express",
+          "standard"
+        ],
+        "special_handling": [
+          "cold_chain",
+          "fragile",
+          "residential"
+        ]
+      },
+      "invoice_charge_codes": [
+        "freight",
+        "handling"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md",
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json"
+      ]
+    },
+    {
+      "carrier": "alpine",
+      "copy": "b",
+      "round": 1,
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json",
+      "vocabulary": {
+        "service_level": [
+          "express",
+          "standard"
+        ],
+        "special_handling": [
+          "cold_chain",
+          "fragile",
+          "residential"
+        ]
+      },
+      "invoice_charge_codes": [
+        "freight",
+        "handling"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md",
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json"
+      ]
+    },
+    {
+      "carrier": "falcon",
+      "copy": "a",
+      "round": 1,
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json",
+      "vocabulary": {
+        "service_level": [
+          "express",
+          "standard"
+        ],
+        "special_handling": [
+          "cold_chain",
+          "fragile",
+          "residential"
+        ]
+      },
+      "invoice_charge_codes": [
+        "detention",
+        "express_premium",
+        "freight",
+        "freight_incl_fuel",
+        "fuel_surcharge",
+        "residential_delivery"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md",
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json"
+      ]
+    },
+    {
+      "carrier": "falcon",
+      "copy": "b",
+      "round": 1,
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json",
+      "vocabulary": {
+        "service_level": [
+          "express",
+          "standard"
+        ],
+        "special_handling": [
+          "cold_chain",
+          "fragile",
+          "residential"
+        ]
+      },
+      "invoice_charge_codes": [
+        "detention",
+        "express_premium",
+        "freight",
+        "freight_incl_fuel",
+        "fuel_surcharge",
+        "residential_delivery"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md",
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json"
+      ]
+    },
+    {
+      "carrier": "sagar",
+      "copy": "a",
+      "round": 1,
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json",
+      "vocabulary": {
+        "service_level": [
+          "express",
+          "standard"
+        ],
+        "special_handling": [
+          "cold_chain",
+          "fragile",
+          "residential"
+        ]
+      },
+      "invoice_charge_codes": [
+        "cold_chain_premium",
+        "freight"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md",
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json"
+      ]
+    },
+    {
+      "carrier": "sagar",
+      "copy": "b",
+      "round": 1,
+      "contract": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md",
+      "clause_index": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json",
+      "vocabulary": {
+        "service_level": [
+          "express",
+          "standard"
+        ],
+        "special_handling": [
+          "cold_chain",
+          "fragile",
+          "residential"
+        ]
+      },
+      "invoice_charge_codes": [
+        "cold_chain_premium",
+        "freight"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md",
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json"
+      ]
+    }
+  ]
+}

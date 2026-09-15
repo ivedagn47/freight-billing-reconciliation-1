@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/usr/bin/env",
+    "bash",
+    "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/scripts/merge-adjudications.sh"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts",
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 0.074,
+  "stdout": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/merge_adjudications/attempt-1/script.stdout.log",
+  "stderr": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/merge_adjudications/attempt-1/script.stderr.log"
+}

@@ -1,0 +1,147 @@
+{
+  "batch_id": "adj-001",
+  "items": [
+    {
+      "item_id": "SAGAR-JUL-1#3",
+      "invoice": "SAGAR-JUL-1",
+      "doc_type": "invoice",
+      "carrier": "sagar",
+      "line_no": 3,
+      "consignment_ref": "SG-7003",
+      "shipment_id": "SH-4229",
+      "billed_amount": "570.00",
+      "expected_amount": "530.00",
+      "delta": "40.00",
+      "contract_file": "sagar-roadlines.md",
+      "contract_clauses": [
+        "1"
+      ],
+      "components": [
+        {
+          "name": "weight_component",
+          "kind": "freight",
+          "applied": true,
+          "amount": "360",
+          "clauses": [
+            "1"
+          ]
+        },
+        {
+          "name": "distance_component",
+          "kind": "freight",
+          "applied": true,
+          "amount": "170",
+          "clauses": [
+            "1"
+          ]
+        },
+        {
+          "name": "cold_chain_premium",
+          "kind": "premium",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "3"
+          ]
+        }
+      ],
+      "quantities": {},
+      "billed_charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "530.00",
+          "derived": false,
+          "matched_components": [
+            "weight_component",
+            "distance_component"
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "code": "COMPONENT_ARITHMETIC",
+          "message": "on the invoice itself, freight_rs + chill_prem_rs does not equal total_rs",
+          "clauses": [],
+          "details": {
+            "check": "line_total_equals_charges",
+            "computed": "530.00",
+            "stated": "570.00"
+          }
+        }
+      ],
+      "evidence": {
+        "invoice_attributes": {
+          "weight_kg": 60,
+          "distance_km": 85
+        },
+        "note": null,
+        "source": {
+          "first_line": 4,
+          "last_line": 4
+        },
+        "shipment": {
+          "shipment_id": "SH-4229",
+          "ship_date": "2026-07-04",
+          "billed_weight_kg": 60,
+          "distance_km": 85,
+          "service_level": "standard",
+          "special_handling": [],
+          "delivery_status": "delivered",
+          "delivered_at": "2026-07-06"
+        }
+      },
+      "options": [
+        "dispute",
+        "escalate"
+      ],
+      "policy_basis": [
+        "billed exceeds expected",
+        "COMPONENT_ARITHMETIC"
+      ]
+    }
+  ],
+  "contracts": {
+    "sagar": {
+      "file": "sagar-roadlines.md",
+      "agreement_ref": "SRL/BFC/2025-08",
+      "term": {
+        "start": "2025-08-01",
+        "end": "2027-07-31",
+        "text": "1 August 2025 \u2013 31 July 2027"
+      },
+      "clauses": [
+        {
+          "id": "1",
+          "section": "Freight charges",
+          "text": "Freight per consignment is the sum of: - a weight component of \u20b96.00 per kg of billed weight, and - a distance component of \u20b92.00 per km of the booked lane distance."
+        },
+        {
+          "id": "2",
+          "section": "Freight charges",
+          "text": "Only standard service is offered under this agreement."
+        },
+        {
+          "id": "3",
+          "section": "Cold chain",
+          "text": "Consignments booked as cold chain travel in refrigerated vehicles and carry a premium of 20% on the freight charge (the sum of the weight and distance components)."
+        },
+        {
+          "id": "4",
+          "section": "Invoicing and payment",
+          "text": "The Carrier invoices as trips are pooled, typically fortnightly. Payment is due 21 days from invoice date."
+        },
+        {
+          "id": "5",
+          "section": "Invoicing and payment",
+          "text": "The consignment note (c-note) number quoted on each invoice line is the Carrier's reference and must correspond to a Customer booking. Lines that cannot be matched to a booking are not payable until reconciled."
+        },
+        {
+          "id": "6",
+          "section": "Invoicing and payment",
+          "text": "The Carrier may issue credit notes correcting earlier invoices. A credit note references the original c-note number and the invoice it corrects, and must cover the full corrected amount."
+        }
+      ]
+    }
+  }
+}

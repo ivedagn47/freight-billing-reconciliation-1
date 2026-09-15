@@ -1,0 +1,1 @@
+Load the reconcile-freight skill with the Skill tool and follow it to reconcile billing period 2026-07. Use run id freight-2026-07 and runs directory runs, so pass --runs-dir runs to every flowstate command. Extract every contract afresh (set use_rules_cache=false). Finish with the skill's final report.

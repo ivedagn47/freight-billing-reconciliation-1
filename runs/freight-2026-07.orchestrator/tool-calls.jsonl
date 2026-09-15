@@ -1,0 +1,10 @@
+{"tool":"Skill","input":"reconcile-freight"}
+{"tool":"Skill","input":"graph-orchestrator"}
+{"tool":"Bash","input":"orchestrator/bin/flowstate validate freight-reconciliation"}
+{"tool":"Bash","input":"orchestrator/bin/flowstate --runs-dir runs init freight-reconciliation --run-id freight-2026-07 --var period=2026-07 --var use_rules_cache=false"}
+{"tool":"Bash","input":"orchestrator/bin/flowstate --runs-dir runs advance freight-2026-07 --max-wait 300"}
+{"tool":"Read","input":"/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/publication.json"}
+{"tool":"Bash","input":"python3 -c \"\nimport json\nd = json.load(open('/Users/vedangi/Downloads/freight-billing-reconciliation/reconciliation-report.json'))\nprint(json.dumps(d.get('summary'), indent=2))\n\""}
+{"tool":"Read","input":"/Users/vedangi/Downloads/freight-billing-reconciliation/reconciliation-report.json"}
+{"tool":"Grep","input":"\"summary\""}
+{"tool":"Grep","input":"\"summary\""}

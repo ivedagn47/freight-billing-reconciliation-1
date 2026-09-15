@@ -1,0 +1,45 @@
+{
+  "doc_id": "SAGAR-CN-01",
+  "id_source": "document",
+  "doc_type": "credit_note",
+  "format": "sagar-csv",
+  "carrier": "sagar",
+  "source_file": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/invoices/SAGAR-CN-01.csv",
+  "source_sha256": "78cf91337209cead12b9c40c00d314daa749668f6808b5cc0600aaeeb1c48e37",
+  "billing_period": null,
+  "period": null,
+  "issue_date": null,
+  "against_invoice": "SAGAR-AUG-1",
+  "agreement_ref": null,
+  "stated": {
+    "total": "-156.00",
+    "line_count": null,
+    "discount": null
+  },
+  "lines": [
+    {
+      "line_no": 1,
+      "consignment_ref": "SG-7056",
+      "booking_date": null,
+      "attributes": {},
+      "charges": [
+        {
+          "code": "credit",
+          "label": "credit_rs",
+          "amount": "-156.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "-156.00",
+      "note": null,
+      "source": {
+        "first_line": 2,
+        "last_line": 2
+      }
+    }
+  ],
+  "integrity": {
+    "checks": 2,
+    "failures": []
+  }
+}

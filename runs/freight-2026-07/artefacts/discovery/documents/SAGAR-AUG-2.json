@@ -1,0 +1,626 @@
+{
+  "doc_id": "SAGAR-AUG-2",
+  "id_source": "filename",
+  "doc_type": "invoice",
+  "format": "sagar-csv",
+  "carrier": "sagar",
+  "source_file": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/invoices/SAGAR-AUG-2.csv",
+  "source_sha256": "dfcd68b41fc37f5ebbde62fd7011886f2d61627fd62640fbe743a4fa258a903c",
+  "billing_period": "2026-08",
+  "period": null,
+  "issue_date": null,
+  "against_invoice": null,
+  "agreement_ref": null,
+  "stated": {
+    "total": "28750.00",
+    "line_count": null,
+    "discount": null
+  },
+  "lines": [
+    {
+      "line_no": 1,
+      "consignment_ref": "SG-7076",
+      "booking_date": "2026-08-17",
+      "attributes": {
+        "weight_kg": 60,
+        "distance_km": 110
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "580.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "580.00",
+      "note": null,
+      "source": {
+        "first_line": 2,
+        "last_line": 2
+      }
+    },
+    {
+      "line_no": 2,
+      "consignment_ref": "SG-7077",
+      "booking_date": "2026-08-18",
+      "attributes": {
+        "weight_kg": 150,
+        "distance_km": 160
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1220.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1220.00",
+      "note": null,
+      "source": {
+        "first_line": 3,
+        "last_line": 3
+      }
+    },
+    {
+      "line_no": 3,
+      "consignment_ref": "SG-7078",
+      "booking_date": "2026-08-19",
+      "attributes": {
+        "weight_kg": 150,
+        "distance_km": 110
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1120.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1120.00",
+      "note": null,
+      "source": {
+        "first_line": 4,
+        "last_line": 4
+      }
+    },
+    {
+      "line_no": 4,
+      "consignment_ref": "SG-7079",
+      "booking_date": "2026-08-20",
+      "attributes": {
+        "weight_kg": 75,
+        "distance_km": 85
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "620.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "620.00",
+      "note": null,
+      "source": {
+        "first_line": 5,
+        "last_line": 5
+      }
+    },
+    {
+      "line_no": 5,
+      "consignment_ref": "SG-7080",
+      "booking_date": "2026-08-21",
+      "attributes": {
+        "weight_kg": 200,
+        "distance_km": 88
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1376.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1376.00",
+      "note": null,
+      "source": {
+        "first_line": 6,
+        "last_line": 6
+      }
+    },
+    {
+      "line_no": 6,
+      "consignment_ref": "SG-7081",
+      "booking_date": "2026-08-22",
+      "attributes": {
+        "weight_kg": 45,
+        "distance_km": 140
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "550.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "550.00",
+      "note": null,
+      "source": {
+        "first_line": 7,
+        "last_line": 7
+      }
+    },
+    {
+      "line_no": 7,
+      "consignment_ref": "SG-7082",
+      "booking_date": "2026-08-23",
+      "attributes": {
+        "weight_kg": 260,
+        "distance_km": 70
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1700.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1700.00",
+      "note": null,
+      "source": {
+        "first_line": 8,
+        "last_line": 8
+      }
+    },
+    {
+      "line_no": 8,
+      "consignment_ref": "SG-7083",
+      "booking_date": "2026-08-24",
+      "attributes": {
+        "weight_kg": 90,
+        "distance_km": 140
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "820.00",
+          "derived": false
+        },
+        {
+          "code": "cold_chain_premium",
+          "label": "chill_prem_rs",
+          "amount": "164.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "984.00",
+      "note": null,
+      "source": {
+        "first_line": 9,
+        "last_line": 9
+      }
+    },
+    {
+      "line_no": 9,
+      "consignment_ref": "SG-7084",
+      "booking_date": "2026-08-25",
+      "attributes": {
+        "weight_kg": 75,
+        "distance_km": 60
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "570.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "570.00",
+      "note": null,
+      "source": {
+        "first_line": 10,
+        "last_line": 10
+      }
+    },
+    {
+      "line_no": 10,
+      "consignment_ref": "SG-7085",
+      "booking_date": "2026-08-26",
+      "attributes": {
+        "weight_kg": 200,
+        "distance_km": 140
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1480.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1480.00",
+      "note": null,
+      "source": {
+        "first_line": 11,
+        "last_line": 11
+      }
+    },
+    {
+      "line_no": 11,
+      "consignment_ref": "SG-7086",
+      "booking_date": "2026-08-27",
+      "attributes": {
+        "weight_kg": 45,
+        "distance_km": 60
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "390.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "430.00",
+      "note": null,
+      "source": {
+        "first_line": 12,
+        "last_line": 12
+      }
+    },
+    {
+      "line_no": 12,
+      "consignment_ref": "SG-7087",
+      "booking_date": "2026-08-28",
+      "attributes": {
+        "weight_kg": 300,
+        "distance_km": 85
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1970.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1970.00",
+      "note": null,
+      "source": {
+        "first_line": 13,
+        "last_line": 13
+      }
+    },
+    {
+      "line_no": 13,
+      "consignment_ref": "SG-7088",
+      "booking_date": "2026-08-16",
+      "attributes": {
+        "weight_kg": 75,
+        "distance_km": 130
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "710.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "710.00",
+      "note": null,
+      "source": {
+        "first_line": 14,
+        "last_line": 14
+      }
+    },
+    {
+      "line_no": 14,
+      "consignment_ref": "SG-7089",
+      "booking_date": "2026-08-17",
+      "attributes": {
+        "weight_kg": 260,
+        "distance_km": 130
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1820.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1820.00",
+      "note": null,
+      "source": {
+        "first_line": 15,
+        "last_line": 15
+      }
+    },
+    {
+      "line_no": 15,
+      "consignment_ref": "SG-7090",
+      "booking_date": "2026-08-18",
+      "attributes": {
+        "weight_kg": 60,
+        "distance_km": 140
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "640.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "640.00",
+      "note": null,
+      "source": {
+        "first_line": 16,
+        "last_line": 16
+      }
+    },
+    {
+      "line_no": 16,
+      "consignment_ref": "SG-7091",
+      "booking_date": "2026-08-19",
+      "attributes": {
+        "weight_kg": 110,
+        "distance_km": 100
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "860.00",
+          "derived": false
+        },
+        {
+          "code": "cold_chain_premium",
+          "label": "chill_prem_rs",
+          "amount": "172.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1032.00",
+      "note": null,
+      "source": {
+        "first_line": 17,
+        "last_line": 17
+      }
+    },
+    {
+      "line_no": 17,
+      "consignment_ref": "SG-7092",
+      "booking_date": "2026-08-20",
+      "attributes": {
+        "weight_kg": 150,
+        "distance_km": 110
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1120.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1120.00",
+      "note": null,
+      "source": {
+        "first_line": 18,
+        "last_line": 18
+      }
+    },
+    {
+      "line_no": 18,
+      "consignment_ref": "SG-7093",
+      "booking_date": "2026-08-21",
+      "attributes": {
+        "weight_kg": 300,
+        "distance_km": 85
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1970.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1970.00",
+      "note": null,
+      "source": {
+        "first_line": 19,
+        "last_line": 19
+      }
+    },
+    {
+      "line_no": 19,
+      "consignment_ref": "SG-7094",
+      "booking_date": "2026-08-22",
+      "attributes": {
+        "weight_kg": 260,
+        "distance_km": 110
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1780.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1780.00",
+      "note": null,
+      "source": {
+        "first_line": 20,
+        "last_line": 20
+      }
+    },
+    {
+      "line_no": 20,
+      "consignment_ref": "SG-7095",
+      "booking_date": "2026-08-23",
+      "attributes": {
+        "weight_kg": 110,
+        "distance_km": 45
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "750.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "750.00",
+      "note": null,
+      "source": {
+        "first_line": 21,
+        "last_line": 21
+      }
+    },
+    {
+      "line_no": 21,
+      "consignment_ref": "SG-7096",
+      "booking_date": "2026-08-24",
+      "attributes": {
+        "weight_kg": 200,
+        "distance_km": 100
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1400.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1400.00",
+      "note": null,
+      "source": {
+        "first_line": 22,
+        "last_line": 22
+      }
+    },
+    {
+      "line_no": 22,
+      "consignment_ref": "SG-7097",
+      "booking_date": "2026-08-25",
+      "attributes": {
+        "weight_kg": 260,
+        "distance_km": 95
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1750.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1750.00",
+      "note": null,
+      "source": {
+        "first_line": 23,
+        "last_line": 23
+      }
+    },
+    {
+      "line_no": 23,
+      "consignment_ref": "SG-7098",
+      "booking_date": "2026-08-26",
+      "attributes": {
+        "weight_kg": 150,
+        "distance_km": 145
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1190.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1190.00",
+      "note": null,
+      "source": {
+        "first_line": 24,
+        "last_line": 24
+      }
+    },
+    {
+      "line_no": 24,
+      "consignment_ref": "SG-7099",
+      "booking_date": "2026-08-27",
+      "attributes": {
+        "weight_kg": 45,
+        "distance_km": 85
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "440.00",
+          "derived": false
+        },
+        {
+          "code": "cold_chain_premium",
+          "label": "chill_prem_rs",
+          "amount": "88.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "528.00",
+      "note": null,
+      "source": {
+        "first_line": 25,
+        "last_line": 25
+      }
+    },
+    {
+      "line_no": 25,
+      "consignment_ref": "SG-7100",
+      "booking_date": "2026-08-28",
+      "attributes": {
+        "weight_kg": 200,
+        "distance_km": 130
+      },
+      "charges": [
+        {
+          "code": "freight",
+          "label": "freight_rs",
+          "amount": "1460.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "1460.00",
+      "note": null,
+      "source": {
+        "first_line": 26,
+        "last_line": 26
+      }
+    }
+  ],
+  "integrity": {
+    "checks": 52,
+    "failures": [
+      {
+        "check": "line_total_equals_charges",
+        "message": "freight_rs + chill_prem_rs does not equal total_rs",
+        "line_no": 11,
+        "expected": "390.00",
+        "actual": "430.00"
+      }
+    ]
+  }
+}

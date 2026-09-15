@@ -1,0 +1,13 @@
+== orchestrator (sonnet, budget $5): run freight-2026-07 in runs ==
+orchestrator exit code: 0
+== final report ==
+I have all the figures needed. The run completed cleanly on the first advance with no interventions required.
+
+COMPLETED run freight-2026-07
+Published: /Users/vedangi/Downloads/freight-billing-reconciliation/reconciliation-report.json and /Users/vedangi/Downloads/freight-billing-reconciliation/memos (6 memos)
+Summary: total billed 458107.46, total expected null (one escalated line has no determinable expected amount), in dispute 8832.0; accept 122, dispute 4, escalate 1 (lines)
+Interventions: none — the run completed on the first `advance` with no gate failures, retries, or respawns.
+== orchestrator result ==
+{"subtype":"success","is_error":false,"num_turns":13,"cost":0.26128100000000004,"denials":[{"tool_name":"Bash","input":"python3 -c \"\nimport json\nd = json.load(open('/Users/vedangi/Downloads/freight-billing-reconciliation/reconciliation-report.json'))\nprint(json.dumps(d.get('summary'), indent=2))\n\""}]}
+{"status":"completed","situation":null,"pause":null}
+evidence: runs/freight-2026-07 and runs/freight-2026-07.orchestrator

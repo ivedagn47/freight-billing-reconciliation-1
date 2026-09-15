@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/usr/bin/env",
+    "bash",
+    "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/gates/priced-covers-scope.sh"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts",
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 0.076,
+  "stdout": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/gates/price--adjudication_plan/eval-1/00-priced-covers-scope.stdout.log",
+  "stderr": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/gates/price--adjudication_plan/eval-1/00-priced-covers-scope.stderr.log"
+}

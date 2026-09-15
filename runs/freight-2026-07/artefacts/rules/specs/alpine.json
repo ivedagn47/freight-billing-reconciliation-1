@@ -1,0 +1,136 @@
+{
+  "_session_id": "4f02bef8-ad45-4603-a6ef-bc0fce129177",
+  "spec_version": 1,
+  "carrier": "alpine",
+  "contract_file": "alpine-express.md",
+  "agreement_ref": "AEL/BFC/2025-03",
+  "term": {
+    "start": "2025-03-01",
+    "end": "2027-02-28",
+    "clauses": [
+      "header"
+    ]
+  },
+  "quantities": [
+    {
+      "name": "chargeable_kg",
+      "op": "max",
+      "args": [
+        {
+          "field": "billed_weight_kg"
+        },
+        {
+          "const": 25
+        }
+      ],
+      "description": "higher of the consignment's actual weight and the minimum chargeable weight of 25 kg",
+      "clauses": [
+        "1"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "name": "base_freight",
+      "kind": "freight",
+      "charge_codes": [
+        "freight"
+      ],
+      "clauses": [
+        "1",
+        "2"
+      ],
+      "calc": {
+        "op": "banded_rate",
+        "basis": {
+          "quantity": "chargeable_kg"
+        },
+        "select_by": {
+          "field": "billed_weight_kg"
+        },
+        "bands": [
+          {
+            "min": null,
+            "min_inclusive": false,
+            "max": 50,
+            "max_inclusive": false,
+            "rate": 9.5
+          },
+          {
+            "min": 50,
+            "min_inclusive": false,
+            "max": null,
+            "max_inclusive": false,
+            "rate": 8.25
+          }
+        ]
+      }
+    },
+    {
+      "name": "fragile_handling",
+      "kind": "accessorial",
+      "charge_codes": [
+        "handling"
+      ],
+      "clauses": [
+        "4"
+      ],
+      "when": {
+        "special_handling_includes": "fragile"
+      },
+      "calc": {
+        "op": "flat",
+        "amount": 150
+      }
+    }
+  ],
+  "service_levels": {
+    "allowed": [
+      "standard"
+    ],
+    "clauses": [
+      "3"
+    ]
+  },
+  "invoice_adjustments": [
+    {
+      "name": "volume_discount",
+      "kind": "discount",
+      "clauses": [
+        "5"
+      ],
+      "when": {
+        "consignments_in_billing_month": {
+          "gt": 12
+        }
+      },
+      "calc": {
+        "op": "percent_of_invoice_expected",
+        "percent": 5
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "description": "rates are stated for consignments under 50 kg and over 50 kg; a consignment of exactly 50 kg is not rated",
+      "clauses": [
+        "2"
+      ]
+    }
+  ],
+  "non_pricing": [
+    {
+      "clauses": [
+        "6"
+      ],
+      "reason": "invoicing cycle and payment terms"
+    },
+    {
+      "clauses": [
+        "7"
+      ],
+      "reason": "notice period and effective date for rate revisions"
+    }
+  ],
+  "unrepresentable": []
+}

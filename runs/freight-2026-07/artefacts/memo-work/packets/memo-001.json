@@ -1,0 +1,634 @@
+{
+  "batch_id": "memo-001",
+  "memos": [
+    {
+      "memo_id": "ALPINE-0726-line-005",
+      "kind": "line",
+      "item_id": "ALPINE-0726#5",
+      "carrier": "alpine",
+      "carrier_name": "Alpine Express Logistics",
+      "invoice": "ALPINE-0726",
+      "doc_type": "invoice",
+      "line_no": 5,
+      "consignment_ref": "AE-3005",
+      "shipment_id": "SH-4111",
+      "billed_amount": 475.0,
+      "expected_amount": null,
+      "delta": null,
+      "disposition": "escalate",
+      "justification": "Escalated: the freight charge: no rate band covers 50.0; the contract does not determine this price.",
+      "contract_clause": "alpine-express.md \u00a71, \u00a72",
+      "notes": null,
+      "flags": [
+        {
+          "code": "CONTRACT_GAP",
+          "message": "the freight charge: no rate band covers 50.0; the contract does not determine this price",
+          "details": {
+            "component": "base_freight",
+            "value": "50.0"
+          }
+        }
+      ],
+      "billed_charges": [
+        {
+          "label": "rate_per_kg x chargeable_weight_kg",
+          "code": "freight",
+          "amount": "475.00"
+        }
+      ],
+      "components": [
+        {
+          "name": "base_freight",
+          "kind": "freight",
+          "applied": true,
+          "amount": null,
+          "clauses": [
+            "1",
+            "2"
+          ]
+        },
+        {
+          "name": "fragile_handling",
+          "kind": "accessorial",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "4"
+          ]
+        }
+      ],
+      "quantities": {
+        "chargeable_kg": "50.0"
+      },
+      "evidence": {
+        "invoice_attributes": {
+          "actual_weight_kg": 50.0,
+          "chargeable_weight_kg": 50.0,
+          "rate_per_kg": 9.5
+        },
+        "note": null,
+        "source": {
+          "first_line": null,
+          "last_line": null
+        },
+        "shipment": {
+          "shipment_id": "SH-4111",
+          "ship_date": "2026-07-06",
+          "billed_weight_kg": 50.0,
+          "distance_km": 570,
+          "service_level": "standard",
+          "special_handling": [],
+          "delivery_status": "delivered",
+          "delivered_at": "2026-07-08"
+        }
+      }
+    },
+    {
+      "memo_id": "FALCON-2026-07A-line-011",
+      "kind": "line",
+      "item_id": "FALCON-2026-07A#11",
+      "carrier": "falcon",
+      "carrier_name": "Falcon Freight Pvt Ltd",
+      "invoice": "FALCON-2026-07A",
+      "doc_type": "invoice",
+      "line_no": 11,
+      "consignment_ref": "FF-8011",
+      "shipment_id": "SH-4011",
+      "billed_amount": 22704.0,
+      "expected_amount": 21504.0,
+      "delta": 1200.0,
+      "disposition": "dispute",
+      "justification": "Billed INR 22,704.00 exceeds the contract amount of INR 21,504.00 by INR 1,200.00. Detention charge at consignee (detention) is not a charge the contract provides for.",
+      "contract_clause": "falcon-freight.md \u00a71, \u00a73",
+      "notes": null,
+      "flags": [
+        {
+          "code": "UNCONTRACTED_CHARGE",
+          "message": "Detention charge at consignee (detention) is not a charge the contract provides for",
+          "details": {
+            "label": "Detention charge at consignee",
+            "code": "detention",
+            "amount": "1200.00"
+          }
+        }
+      ],
+      "billed_charges": [
+        {
+          "label": "Detention charge at consignee",
+          "code": "detention",
+          "amount": "1200.00"
+        },
+        {
+          "label": "Freight incl. fuel surcharge",
+          "code": "freight_incl_fuel",
+          "amount": "21504.00"
+        }
+      ],
+      "components": [
+        {
+          "name": "base_freight",
+          "kind": "freight",
+          "applied": true,
+          "amount": "19200",
+          "clauses": [
+            "1"
+          ],
+          "band": {
+            "min": 501,
+            "min_inclusive": true,
+            "max": 2000,
+            "max_inclusive": true,
+            "rate": 24
+          }
+        },
+        {
+          "name": "express_premium",
+          "kind": "premium",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "2"
+          ]
+        },
+        {
+          "name": "fuel_surcharge",
+          "kind": "surcharge",
+          "applied": true,
+          "amount": "2304",
+          "clauses": [
+            "3"
+          ]
+        },
+        {
+          "name": "residential_delivery",
+          "kind": "accessorial",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "4"
+          ],
+          "unverifiable": [
+            "consignee address is a residence"
+          ]
+        }
+      ],
+      "quantities": {},
+      "evidence": {
+        "invoice_attributes": {
+          "origin": "Mumbai",
+          "destination": "Bengaluru",
+          "distance_km": 800,
+          "weight_kg": 700,
+          "service_level": "standard"
+        },
+        "note": null,
+        "source": {
+          "first_line": 57,
+          "last_line": 61
+        },
+        "shipment": {
+          "shipment_id": "SH-4011",
+          "ship_date": "2026-07-12",
+          "billed_weight_kg": 700,
+          "distance_km": 800,
+          "service_level": "standard",
+          "special_handling": [],
+          "delivery_status": "delivered",
+          "delivered_at": "2026-07-14"
+        }
+      }
+    },
+    {
+      "memo_id": "FALCON-2026-07B-line-008",
+      "kind": "line",
+      "item_id": "FALCON-2026-07B#8",
+      "carrier": "falcon",
+      "carrier_name": "Falcon Freight Pvt Ltd",
+      "invoice": "FALCON-2026-07B",
+      "doc_type": "invoice",
+      "line_no": 8,
+      "consignment_ref": "FF-8003",
+      "shipment_id": "SH-4003",
+      "billed_amount": 7392.0,
+      "expected_amount": 0.0,
+      "delta": 7392.0,
+      "disposition": "dispute",
+      "justification": "Billed INR 7,392.00 exceeds the contract amount of INR 0.00 by INR 7,392.00. FF-8003 was already billed on FALCON-2026-07A#3.",
+      "contract_clause": null,
+      "notes": null,
+      "flags": [
+        {
+          "code": "DUPLICATE_BILLING",
+          "message": "FF-8003 was already billed on FALCON-2026-07A#3",
+          "details": {
+            "first_billed_on": "FALCON-2026-07A#3"
+          }
+        }
+      ],
+      "billed_charges": [
+        {
+          "label": "Freight incl. fuel surcharge",
+          "code": "freight_incl_fuel",
+          "amount": "7392.00"
+        }
+      ],
+      "components": [
+        {
+          "name": "base_freight",
+          "kind": "freight",
+          "applied": true,
+          "amount": "6600",
+          "clauses": [
+            "1"
+          ],
+          "band": {
+            "min": 501,
+            "min_inclusive": true,
+            "max": 2000,
+            "max_inclusive": true,
+            "rate": 24
+          }
+        },
+        {
+          "name": "express_premium",
+          "kind": "premium",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "2"
+          ]
+        },
+        {
+          "name": "fuel_surcharge",
+          "kind": "surcharge",
+          "applied": true,
+          "amount": "792",
+          "clauses": [
+            "3"
+          ]
+        },
+        {
+          "name": "residential_delivery",
+          "kind": "accessorial",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "4"
+          ],
+          "unverifiable": [
+            "consignee address is a residence"
+          ]
+        }
+      ],
+      "quantities": {},
+      "evidence": {
+        "invoice_attributes": {
+          "origin": "Pune",
+          "destination": "Kolhapur",
+          "distance_km": 275,
+          "weight_kg": 900,
+          "service_level": "standard"
+        },
+        "note": null,
+        "source": {
+          "first_line": 42,
+          "last_line": 45
+        },
+        "shipment": {
+          "shipment_id": "SH-4003",
+          "ship_date": "2026-07-04",
+          "billed_weight_kg": 900,
+          "distance_km": 275,
+          "service_level": "standard",
+          "special_handling": [],
+          "delivery_status": "delivered",
+          "delivered_at": "2026-07-06"
+        }
+      }
+    },
+    {
+      "memo_id": "SAGAR-JUL-1-line-003",
+      "kind": "line",
+      "item_id": "SAGAR-JUL-1#3",
+      "carrier": "sagar",
+      "carrier_name": "Sagar Roadlines",
+      "invoice": "SAGAR-JUL-1",
+      "doc_type": "invoice",
+      "line_no": 3,
+      "consignment_ref": "SG-7003",
+      "shipment_id": "SH-4229",
+      "billed_amount": 570.0,
+      "expected_amount": 530.0,
+      "delta": 40.0,
+      "disposition": "dispute",
+      "justification": "The invoice's own figures do not add up: the freight charge comes to 530.00, but the invoice states a total of 570.00, a difference of 40.00. The shipment carries no special handling, so no premium is due on top of freight. Freight under the contract is the weight and distance components only, which total 530.00, so the extra 40.00 is not supported and should be disputed. (cited: sagar-roadlines.md \u00a71)",
+      "contract_clause": "sagar-roadlines.md \u00a71",
+      "notes": null,
+      "flags": [
+        {
+          "code": "COMPONENT_ARITHMETIC",
+          "message": "on the invoice itself, freight_rs + chill_prem_rs does not equal total_rs",
+          "details": {
+            "check": "line_total_equals_charges",
+            "computed": "530.00",
+            "stated": "570.00"
+          }
+        }
+      ],
+      "billed_charges": [
+        {
+          "label": "freight_rs",
+          "code": "freight",
+          "amount": "530.00"
+        }
+      ],
+      "components": [
+        {
+          "name": "weight_component",
+          "kind": "freight",
+          "applied": true,
+          "amount": "360",
+          "clauses": [
+            "1"
+          ]
+        },
+        {
+          "name": "distance_component",
+          "kind": "freight",
+          "applied": true,
+          "amount": "170",
+          "clauses": [
+            "1"
+          ]
+        },
+        {
+          "name": "cold_chain_premium",
+          "kind": "premium",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "3"
+          ]
+        }
+      ],
+      "quantities": {},
+      "evidence": {
+        "invoice_attributes": {
+          "weight_kg": 60,
+          "distance_km": 85
+        },
+        "note": null,
+        "source": {
+          "first_line": 4,
+          "last_line": 4
+        },
+        "shipment": {
+          "shipment_id": "SH-4229",
+          "ship_date": "2026-07-04",
+          "billed_weight_kg": 60,
+          "distance_km": 85,
+          "service_level": "standard",
+          "special_handling": [],
+          "delivery_status": "delivered",
+          "delivered_at": "2026-07-06"
+        }
+      }
+    },
+    {
+      "memo_id": "SAGAR-JUL-1-line-009",
+      "kind": "line",
+      "item_id": "SAGAR-JUL-1#9",
+      "carrier": "sagar",
+      "carrier_name": "Sagar Roadlines",
+      "invoice": "SAGAR-JUL-1",
+      "doc_type": "invoice",
+      "line_no": 9,
+      "consignment_ref": "SG-7009",
+      "shipment_id": "SH-4235",
+      "billed_amount": 1680.0,
+      "expected_amount": 1480.0,
+      "delta": 200.0,
+      "disposition": "dispute",
+      "justification": "Billed INR 1,680.00 exceeds the contract amount of INR 1,480.00 by INR 200.00.",
+      "contract_clause": "sagar-roadlines.md \u00a71",
+      "notes": null,
+      "flags": [],
+      "billed_charges": [
+        {
+          "label": "freight_rs",
+          "code": "freight",
+          "amount": "1680.00"
+        }
+      ],
+      "components": [
+        {
+          "name": "weight_component",
+          "kind": "freight",
+          "applied": true,
+          "amount": "1200",
+          "clauses": [
+            "1"
+          ]
+        },
+        {
+          "name": "distance_component",
+          "kind": "freight",
+          "applied": true,
+          "amount": "280",
+          "clauses": [
+            "1"
+          ]
+        },
+        {
+          "name": "cold_chain_premium",
+          "kind": "premium",
+          "applied": false,
+          "amount": null,
+          "clauses": [
+            "3"
+          ]
+        }
+      ],
+      "quantities": {},
+      "evidence": {
+        "invoice_attributes": {
+          "weight_kg": 200,
+          "distance_km": 140
+        },
+        "note": null,
+        "source": {
+          "first_line": 10,
+          "last_line": 10
+        },
+        "shipment": {
+          "shipment_id": "SH-4235",
+          "ship_date": "2026-07-10",
+          "billed_weight_kg": 200,
+          "distance_km": 140,
+          "service_level": "standard",
+          "special_handling": [],
+          "delivery_status": "delivered",
+          "delivered_at": "2026-07-12"
+        }
+      }
+    },
+    {
+      "memo_id": "ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13",
+      "kind": "finding",
+      "finding_id": "ALPINE-0726!ADJUSTMENT_UNDETERMINED!discount-5pct-from-13",
+      "carrier": "alpine",
+      "carrier_name": "Alpine Express Logistics",
+      "invoice": "ALPINE-0726",
+      "code": "ADJUSTMENT_UNDETERMINED",
+      "description": "the contract's 5% discount for 13 or more consignments in the billing month applies (40 consignments in 2026-07) but the invoice's contract total is undetermined",
+      "amount_impact": null,
+      "disposition": "escalate",
+      "justification": "The contract's 5% discount for 13 or more consignments in the billing month applies (40 consignments in 2026-07) but the invoice's contract total is undetermined.",
+      "contract_clause": "alpine-express.md \u00a75",
+      "details": {
+        "adjustment": "discount-5pct-from-13",
+        "consignments_in_billing_month": 40
+      }
+    }
+  ],
+  "contracts": {
+    "alpine": {
+      "file": "alpine-express.md",
+      "agreement_ref": "AEL/BFC/2025-03",
+      "term": {
+        "start": "2025-03-01",
+        "end": "2027-02-28",
+        "text": "1 March 2025 \u2013 28 February 2027"
+      },
+      "clauses": [
+        {
+          "id": "1",
+          "section": "Freight charges",
+          "text": "Freight is charged on chargeable weight, which is the higher of the consignment's actual weight and the minimum chargeable weight of 25 kg."
+        },
+        {
+          "id": "2",
+          "section": "Freight charges",
+          "text": "Rates: - consignments under 50 kg: \u20b99.50 per kg of chargeable weight - consignments over 50 kg: \u20b98.25 per kg of chargeable weight"
+        },
+        {
+          "id": "3",
+          "section": "Freight charges",
+          "text": "All bookings travel on standard service. Express products are not offered under this agreement."
+        },
+        {
+          "id": "4",
+          "section": "Handling",
+          "text": "Consignments booked as fragile are handled under the Carrier's protected-handling process at \u20b9150.00 per consignment, in addition to freight."
+        },
+        {
+          "id": "5",
+          "section": "Volume incentive",
+          "text": "In any calendar month in which the Customer tenders more than 12 consignments, the Carrier will apply a 5% discount to the invoice total for that month's invoice."
+        },
+        {
+          "id": "6",
+          "section": "Invoicing and payment",
+          "text": "The Carrier invoices monthly. Payment is due 30 days from invoice date."
+        },
+        {
+          "id": "7",
+          "section": "Invoicing and payment",
+          "text": "Rate revisions require 60 days' written notice and take effect from the first day of the following calendar month."
+        }
+      ]
+    },
+    "falcon": {
+      "file": "falcon-freight.md",
+      "agreement_ref": "FF/BFC/2024-11",
+      "term": {
+        "start": "2024-12-01",
+        "end": "2026-11-30",
+        "text": "1 December 2024 \u2013 30 November 2026"
+      },
+      "clauses": [
+        {
+          "id": "1",
+          "section": "Freight charges",
+          "text": "Base freight is charged per kilometre of the booked lane distance, according to the consignment's billed weight: - up to and including 500 kg: \u20b918.00 per km - 501 kg to 2,000 kg: \u20b924.00 per km Consignments above 2,000 kg are quoted case by case and are outside this rate card."
+        },
+        {
+          "id": "2",
+          "section": "Freight charges",
+          "text": "Express service, where booked, carries a premium of 15% of the base freight."
+        },
+        {
+          "id": "3",
+          "section": "Freight charges",
+          "text": "A fuel surcharge of 12% applies to the freight charge (base freight plus express premium, where applicable)."
+        },
+        {
+          "id": "4",
+          "section": "Accessorial charges",
+          "text": "Residential delivery (consignee address is a residence, or the booking is flagged residential): \u20b9250.00 flat per consignment."
+        },
+        {
+          "id": "5",
+          "section": "Accessorial charges",
+          "text": "No other accessorial charges are payable under this agreement. Any service outside this schedule requires the Customer's written agreement in advance, evidenced by a rate confirmation referencing this agreement."
+        },
+        {
+          "id": "6",
+          "section": "Invoicing and payment",
+          "text": "The Carrier invoices fortnightly. Payment is due 30 days from invoice date."
+        },
+        {
+          "id": "7",
+          "section": "Invoicing and payment",
+          "text": "Billing disputes must be raised within 45 days of invoice date. Disputed line items are payable only on resolution; undisputed items remain due."
+        },
+        {
+          "id": "8",
+          "section": "Invoicing and payment",
+          "text": "The Carrier may issue credit notes correcting earlier invoices. A credit note references the original consignment note number and states the invoice it corrects."
+        }
+      ]
+    },
+    "sagar": {
+      "file": "sagar-roadlines.md",
+      "agreement_ref": "SRL/BFC/2025-08",
+      "term": {
+        "start": "2025-08-01",
+        "end": "2027-07-31",
+        "text": "1 August 2025 \u2013 31 July 2027"
+      },
+      "clauses": [
+        {
+          "id": "1",
+          "section": "Freight charges",
+          "text": "Freight per consignment is the sum of: - a weight component of \u20b96.00 per kg of billed weight, and - a distance component of \u20b92.00 per km of the booked lane distance."
+        },
+        {
+          "id": "2",
+          "section": "Freight charges",
+          "text": "Only standard service is offered under this agreement."
+        },
+        {
+          "id": "3",
+          "section": "Cold chain",
+          "text": "Consignments booked as cold chain travel in refrigerated vehicles and carry a premium of 20% on the freight charge (the sum of the weight and distance components)."
+        },
+        {
+          "id": "4",
+          "section": "Invoicing and payment",
+          "text": "The Carrier invoices as trips are pooled, typically fortnightly. Payment is due 21 days from invoice date."
+        },
+        {
+          "id": "5",
+          "section": "Invoicing and payment",
+          "text": "The consignment note (c-note) number quoted on each invoice line is the Carrier's reference and must correspond to a Customer booking. Lines that cannot be matched to a booking are not payable until reconciled."
+        },
+        {
+          "id": "6",
+          "section": "Invoicing and payment",
+          "text": "The Carrier may issue credit notes correcting earlier invoices. A credit note references the original c-note number and the invoice it corrects, and must cover the full corrected amount."
+        }
+      ]
+    }
+  }
+}

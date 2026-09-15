@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/usr/bin/env",
+    "bash",
+    "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/scripts/rules-final.sh"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts",
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 0.077,
+  "stdout": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/rules_final/attempt-1/script.stdout.log",
+  "stderr": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/rules_final/attempt-1/script.stderr.log"
+}

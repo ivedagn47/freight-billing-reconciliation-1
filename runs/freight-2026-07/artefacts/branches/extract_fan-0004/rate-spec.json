@@ -1,0 +1,45 @@
+{
+  "_session_id": "fb1f97c2-b068-441c-b9e1-07da6d70e9b1",
+  "spec_version": 1,
+  "carrier": "sagar",
+  "contract_file": "sagar-roadlines.md",
+  "agreement_ref": "SRL/BFC/2025-08",
+  "term": {"start": "2025-08-01", "end": "2027-07-31", "clauses": ["header"]},
+  "quantities": [],
+  "components": [
+    {
+      "name": "weight_component",
+      "kind": "freight",
+      "charge_codes": ["freight"],
+      "calc": {"op": "per_unit", "basis": {"field": "billed_weight_kg"}, "rate": 6},
+      "description": "weight component of freight: per kg of billed weight",
+      "clauses": ["1"]
+    },
+    {
+      "name": "distance_component",
+      "kind": "freight",
+      "charge_codes": ["freight"],
+      "calc": {"op": "per_unit", "basis": {"field": "distance_km"}, "rate": 2},
+      "description": "distance component of freight: per km of the booked lane distance",
+      "clauses": ["1"]
+    },
+    {
+      "name": "cold_chain_premium",
+      "kind": "premium",
+      "charge_codes": ["cold_chain_premium"],
+      "when": {"special_handling_includes": "cold_chain"},
+      "calc": {"op": "percent_of", "percent": 20, "of": ["weight_component", "distance_component"]},
+      "description": "premium on the freight charge (sum of weight and distance components) for consignments booked as cold chain",
+      "clauses": ["3"]
+    }
+  ],
+  "service_levels": {"allowed": ["standard"], "clauses": ["2"]},
+  "invoice_adjustments": [],
+  "gaps": [],
+  "non_pricing": [
+    {"clauses": ["4"], "reason": "invoicing cycle and payment terms"},
+    {"clauses": ["5"], "reason": "matching invoice lines to bookings by c-note number; payability procedure, does not change a consignment's price"},
+    {"clauses": ["6"], "reason": "credit note procedure for correcting earlier invoices; does not change what a consignment costs"}
+  ],
+  "unrepresentable": []
+}

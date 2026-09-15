@@ -1,0 +1,72 @@
+{
+  "file": "alpine-express.md",
+  "sha256": "caa39649f701795356f6545c0a6c86ea12b2037dc96080027bdf8f17801e6001",
+  "title": "Services Agreement \u2014 Alpine Express Logistics",
+  "agreement_ref": "AEL/BFC/2025-03",
+  "parties": "BlueFin Commerce (\"the Customer\") and Alpine Express Logistics (\"the Carrier\")",
+  "service": "surface parcel and light cargo, South India network",
+  "term": {
+    "start": "2025-03-01",
+    "end": "2027-02-28",
+    "text": "1 March 2025 \u2013 28 February 2027"
+  },
+  "clauses": [
+    {
+      "id": "1",
+      "section": "Freight charges",
+      "text": "Freight is charged on chargeable weight, which is the higher of the consignment's actual weight and the minimum chargeable weight of 25 kg.",
+      "numbers": [
+        "25"
+      ]
+    },
+    {
+      "id": "2",
+      "section": "Freight charges",
+      "text": "Rates: - consignments under 50 kg: \u20b99.50 per kg of chargeable weight - consignments over 50 kg: \u20b98.25 per kg of chargeable weight",
+      "numbers": [
+        "50",
+        "9.5",
+        "8.25"
+      ]
+    },
+    {
+      "id": "3",
+      "section": "Freight charges",
+      "text": "All bookings travel on standard service. Express products are not offered under this agreement.",
+      "numbers": []
+    },
+    {
+      "id": "4",
+      "section": "Handling",
+      "text": "Consignments booked as fragile are handled under the Carrier's protected-handling process at \u20b9150.00 per consignment, in addition to freight.",
+      "numbers": [
+        "150"
+      ]
+    },
+    {
+      "id": "5",
+      "section": "Volume incentive",
+      "text": "In any calendar month in which the Customer tenders more than 12 consignments, the Carrier will apply a 5% discount to the invoice total for that month's invoice.",
+      "numbers": [
+        "12",
+        "5"
+      ]
+    },
+    {
+      "id": "6",
+      "section": "Invoicing and payment",
+      "text": "The Carrier invoices monthly. Payment is due 30 days from invoice date.",
+      "numbers": [
+        "30"
+      ]
+    },
+    {
+      "id": "7",
+      "section": "Invoicing and payment",
+      "text": "Rate revisions require 60 days' written notice and take effect from the first day of the following calendar month.",
+      "numbers": [
+        "60"
+      ]
+    }
+  ]
+}

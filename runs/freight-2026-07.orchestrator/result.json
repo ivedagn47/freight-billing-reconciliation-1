@@ -1,0 +1,1 @@
+{"subtype":"success","is_error":false,"num_turns":13,"cost":0.26128100000000004,"denials":[{"tool_name":"Bash","input":"python3 -c \"\nimport json\nd = json.load(open('/Users/vedangi/Downloads/freight-billing-reconciliation/reconciliation-report.json'))\nprint(json.dumps(d.get('summary'), indent=2))\n\""}]}

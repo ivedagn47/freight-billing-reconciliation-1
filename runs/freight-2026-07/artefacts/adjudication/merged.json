@@ -1,0 +1,13 @@
+{
+  "decisions": {
+    "SAGAR-JUL-1#3": {
+      "disposition": "dispute",
+      "justification": "The invoice's own figures do not add up: the freight charge comes to 530.00, but the invoice states a total of 570.00, a difference of 40.00. The shipment carries no special handling, so no premium is due on top of freight. Freight under the contract is the weight and distance components only, which total 530.00, so the extra 40.00 is not supported and should be disputed.",
+      "clauses": [
+        "1"
+      ],
+      "batch_id": "adj-001",
+      "session_id": "94ca6fa1-ce0b-4b68-990d-ec131458f806"
+    }
+  }
+}

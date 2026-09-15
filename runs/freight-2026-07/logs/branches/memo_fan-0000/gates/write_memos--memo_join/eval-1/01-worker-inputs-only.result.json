@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/usr/bin/env",
+    "bash",
+    "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/gates/worker-inputs-only.sh"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000",
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 0.069,
+  "stdout": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/branches/memo_fan-0000/gates/write_memos--memo_join/eval-1/01-worker-inputs-only.stdout.log",
+  "stderr": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/branches/memo_fan-0000/gates/write_memos--memo_join/eval-1/01-worker-inputs-only.stderr.log"
+}

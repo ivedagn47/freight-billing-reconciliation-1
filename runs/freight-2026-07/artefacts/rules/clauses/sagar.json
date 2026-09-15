@@ -1,0 +1,58 @@
+{
+  "file": "sagar-roadlines.md",
+  "sha256": "43c3f2dfc4e0eade16e79d4924f4b83c8748dc1a06dfaf3bc2694369aaa5ad95",
+  "title": "Transport Agreement \u2014 Sagar Roadlines",
+  "agreement_ref": "SRL/BFC/2025-08",
+  "parties": "BlueFin Commerce (\"the Customer\") and Sagar Roadlines (\"the Carrier\")",
+  "service": "regional surface transport, West Bengal and adjoining districts",
+  "term": {
+    "start": "2025-08-01",
+    "end": "2027-07-31",
+    "text": "1 August 2025 \u2013 31 July 2027"
+  },
+  "clauses": [
+    {
+      "id": "1",
+      "section": "Freight charges",
+      "text": "Freight per consignment is the sum of: - a weight component of \u20b96.00 per kg of billed weight, and - a distance component of \u20b92.00 per km of the booked lane distance.",
+      "numbers": [
+        "6",
+        "2"
+      ]
+    },
+    {
+      "id": "2",
+      "section": "Freight charges",
+      "text": "Only standard service is offered under this agreement.",
+      "numbers": []
+    },
+    {
+      "id": "3",
+      "section": "Cold chain",
+      "text": "Consignments booked as cold chain travel in refrigerated vehicles and carry a premium of 20% on the freight charge (the sum of the weight and distance components).",
+      "numbers": [
+        "20"
+      ]
+    },
+    {
+      "id": "4",
+      "section": "Invoicing and payment",
+      "text": "The Carrier invoices as trips are pooled, typically fortnightly. Payment is due 21 days from invoice date.",
+      "numbers": [
+        "21"
+      ]
+    },
+    {
+      "id": "5",
+      "section": "Invoicing and payment",
+      "text": "The consignment note (c-note) number quoted on each invoice line is the Carrier's reference and must correspond to a Customer booking. Lines that cannot be matched to a booking are not payable until reconciled.",
+      "numbers": []
+    },
+    {
+      "id": "6",
+      "section": "Invoicing and payment",
+      "text": "The Carrier may issue credit notes correcting earlier invoices. A credit note references the original c-note number and the invoice it corrects, and must cover the full corrected amount.",
+      "numbers": []
+    }
+  ]
+}

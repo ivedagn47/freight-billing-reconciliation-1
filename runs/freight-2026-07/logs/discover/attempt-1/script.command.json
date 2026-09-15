@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "/usr/bin/env",
+    "bash",
+    "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/scripts/discover.sh"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts",
+  "timeout_s": 600.0,
+  "env": {
+    "FLOWSTATE_VAR_period": "2026-07",
+    "FLOWSTATE_VAR_use_rules_cache": "false",
+    "FLOWSTATE_VAR_adjudication_batch_size": "10",
+    "FLOWSTATE_VAR_carrier_ids": "",
+    "FLOWSTATE_VAR_carriers_config": "factory/flows/freight-reconciliation/config/carriers.yml",
+    "FLOWSTATE_VAR_data_root": ".",
+    "FLOWSTATE_VAR_invoices_dir": "data/invoices",
+    "FLOWSTATE_VAR_memo_batch_size": "8",
+    "FLOWSTATE_VAR_publish_dir": ".",
+    "FLOWSTATE_VAR_report_schema": "report.schema.json",
+    "FLOWSTATE_VAR_rules_cache_dir": "runs/_cache/rate-specs",
+    "FLOWSTATE_VAR_shipments_file": "data/shipments.json",
+    "FLOWSTATE_VAR__run_id": "freight-2026-07",
+    "FLOWSTATE_VAR__run_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07",
+    "FLOWSTATE_VAR__run_artefact_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts",
+    "FLOWSTATE_VAR__flow_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation",
+    "FLOWSTATE_VAR__node_id": "discover",
+    "FLOWSTATE_VAR_manifest": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/discovery/manifest.json",
+    "FLOWSTATE_RUN_ID": "freight-2026-07",
+    "FLOWSTATE_RUN_DIR": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07",
+    "FLOWSTATE_NODE": "discover"
+  }
+}

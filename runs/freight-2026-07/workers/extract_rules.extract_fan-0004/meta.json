@@ -1,0 +1,22 @@
+{
+  "add_dirs": [],
+  "created_at": "2026-09-15T04:08:51.079+00:00",
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004",
+  "harness": "claude",
+  "harness_opts": {},
+  "id": "extract_rules.extract_fan-0004",
+  "max_budget_usd": 5.0,
+  "model": "opus",
+  "permission_mode": "dontAsk",
+  "registry": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/workers",
+  "session_id": "fb1f97c2-b068-441c-b9e1-07da6d70e9b1",
+  "stall_after_s": 900.0,
+  "tmux_session": "agentctl-d8dd3627-extract_rules_extract_fan-0004",
+  "tools": [
+    "Read",
+    "Write",
+    "Edit",
+    "Glob",
+    "Grep"
+  ]
+}

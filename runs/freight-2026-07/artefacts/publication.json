@@ -1,0 +1,25 @@
+{
+  "dest": "/Users/vedangi/Downloads/freight-billing-reconciliation",
+  "report": "/Users/vedangi/Downloads/freight-billing-reconciliation/reconciliation-report.json",
+  "report_sha256": "2aa9cec3609d6e0e60b8760d80901358c1a6faa4a30bf99a1b4e780d7ffca34f",
+  "memos_dir": "/Users/vedangi/Downloads/freight-billing-reconciliation/memos",
+  "memos": [
+    "ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13",
+    "ALPINE-0726-line-005",
+    "FALCON-2026-07A-line-011",
+    "FALCON-2026-07B-line-008",
+    "SAGAR-JUL-1-line-003",
+    "SAGAR-JUL-1-line-009"
+  ],
+  "summary": {
+    "total_billed": 458107.46,
+    "total_expected": null,
+    "total_in_dispute": 8832.0,
+    "line_count": 127,
+    "counts_by_disposition": {
+      "accept": 122,
+      "dispute": 4,
+      "escalate": 1
+    }
+  }
+}

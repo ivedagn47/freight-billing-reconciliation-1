@@ -1,0 +1,34 @@
+{
+  "completed": true,
+  "cost_usd": 0.1596854,
+  "events": 47,
+  "init": {
+    "agents": [
+      "claude",
+      "Explore",
+      "general-purpose",
+      "Plan"
+    ],
+    "mcp_servers": [],
+    "memory_paths": null,
+    "messaging_socket_path": "/tmp/cc-socks/94503.sock",
+    "permissionMode": "dontAsk",
+    "plugins": [],
+    "skills": [],
+    "slash_commands": [],
+    "tools": [
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ]
+  },
+  "is_error": false,
+  "model": "claude-sonnet-5",
+  "num_turns": 3,
+  "permission_denials": [],
+  "result_text": "Written all six memos to `memo-drafts.json` \u2014 three Falcon/Sagar disputes over billed-vs-contract amounts, a duplicate-billing dispute, and two Alpine escalations (an unbanded 50 kg weight rate, and a volume discount that can't be applied until that other item resolves).",
+  "session_id": "64b1af8f-ac81-49be-9b99-d2011445df88",
+  "subtype": "success"
+}

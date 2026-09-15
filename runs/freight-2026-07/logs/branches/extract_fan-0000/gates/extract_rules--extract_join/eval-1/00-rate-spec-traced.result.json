@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/usr/bin/env",
+    "bash",
+    "/Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/gates/rate-spec-traced.sh"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000",
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 0.075,
+  "stdout": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/branches/extract_fan-0000/gates/extract_rules--extract_join/eval-1/00-rate-spec-traced.stdout.log",
+  "stderr": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/branches/extract_fan-0000/gates/extract_rules--extract_join/eval-1/00-rate-spec-traced.stderr.log"
+}

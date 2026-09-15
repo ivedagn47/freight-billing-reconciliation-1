@@ -1,0 +1,34 @@
+{
+  "completed": true,
+  "cost_usd": 0.225322,
+  "events": 18,
+  "init": {
+    "agents": [
+      "claude",
+      "Explore",
+      "general-purpose",
+      "Plan"
+    ],
+    "mcp_servers": [],
+    "memory_paths": null,
+    "messaging_socket_path": "/tmp/cc-socks/93878.sock",
+    "permissionMode": "dontAsk",
+    "plugins": [],
+    "skills": [],
+    "slash_commands": [],
+    "tools": [
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ]
+  },
+  "is_error": false,
+  "model": "claude-opus-5",
+  "num_turns": 4,
+  "permission_denials": [],
+  "result_text": "I wrote the rate spec for Sagar Roadlines (`SRL/BFC/2025-08`) to `rate-spec.json` in this branch's folder. I checked it against the list in the brief. The automated schema, number-tracing and file-read checks haven't run yet.\n\n**What it prices:**\n- **Freight:** two parts, both billed under `freight` (clause 1):\n  - \u20b96 per kg of billed weight.\n  - \u20b92 per km of the booked lane distance.\n- **Cold chain premium:** 20% of the two freight parts added together, billed under `cold_chain_premium`. It applies only when the booking has the `cold_chain` flag (clause 3).\n- **Services:** only `standard`, because clause 2 says only standard service is offered. Any express shipment will be reported as a service the agreement doesn't offer.\n- **Term:** 2025-08-01 to 2027-07-31, from the header.\n\n**Clauses that don't set a price:**\n- Clause 4 covers when invoices are issued and payment terms.\n- Clause 5 says invoice lines must match a booking.\n- Clause 6 covers credit notes.\n\n**Nothing is left undetermined:** the contract has no weight or distance bands, minimum charges, volume discounts or conditions on facts the booking records don't hold. So `gaps`, `unrepresentable` and `invoice_adjustments` are all empty. Every number in the spec appears in the clause it cites, and every clause is cited at least once.",
+  "session_id": "fb1f97c2-b068-441c-b9e1-07da6d70e9b1",
+  "subtype": "success"
+}

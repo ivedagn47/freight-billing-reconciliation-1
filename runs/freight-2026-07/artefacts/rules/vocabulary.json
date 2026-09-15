@@ -1,0 +1,11 @@
+{
+  "service_level": [
+    "express",
+    "standard"
+  ],
+  "special_handling": [
+    "cold_chain",
+    "fragile",
+    "residential"
+  ]
+}

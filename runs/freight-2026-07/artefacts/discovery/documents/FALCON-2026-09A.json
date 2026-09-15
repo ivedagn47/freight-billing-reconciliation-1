@@ -1,0 +1,509 @@
+{
+  "doc_id": "FALCON-2026-09A",
+  "id_source": "document",
+  "doc_type": "invoice",
+  "format": "falcon-text",
+  "carrier": "falcon",
+  "source_file": "/Users/vedangi/Downloads/freight-billing-reconciliation/data/invoices/FALCON-2026-09A.txt",
+  "source_sha256": "230cfbbfe96f4b3553e9406fd3a19065ac61fe9c43e517aeef9ef3becdf9d0a1",
+  "billing_period": "2026-09",
+  "period": {
+    "start": "2026-09-01",
+    "end": "2026-09-14",
+    "label": "1-14 2026-09"
+  },
+  "issue_date": null,
+  "against_invoice": null,
+  "agreement_ref": "FF/BFC/2024-11",
+  "stated": {
+    "total": "175601.60",
+    "line_count": null,
+    "discount": null
+  },
+  "lines": [
+    {
+      "line_no": 1,
+      "consignment_ref": "FF-8072",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Nagpur",
+        "distance_km": 340,
+        "weight_kg": 900,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "9139.20",
+          "derived": false
+        }
+      ],
+      "stated_total": "9139.20",
+      "note": null,
+      "source": {
+        "first_line": 6,
+        "last_line": 9
+      }
+    },
+    {
+      "line_no": 2,
+      "consignment_ref": "FF-8073",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Nashik",
+        "destination": "Pune",
+        "distance_km": 300,
+        "weight_kg": 480,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "6048.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "6048.00",
+      "note": null,
+      "source": {
+        "first_line": 11,
+        "last_line": 14
+      }
+    },
+    {
+      "line_no": 3,
+      "consignment_ref": "FF-8074",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Nashik",
+        "destination": "Pune",
+        "distance_km": 300,
+        "weight_kg": 480,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "6048.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "6048.00",
+      "note": null,
+      "source": {
+        "first_line": 16,
+        "last_line": 19
+      }
+    },
+    {
+      "line_no": 4,
+      "consignment_ref": "FF-8075",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Ahmedabad",
+        "distance_km": 530,
+        "weight_kg": 900,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "14246.40",
+          "derived": false
+        }
+      ],
+      "stated_total": "14246.40",
+      "note": null,
+      "source": {
+        "first_line": 21,
+        "last_line": 24
+      }
+    },
+    {
+      "line_no": 5,
+      "consignment_ref": "FF-8076",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Vadodara",
+        "distance_km": 520,
+        "weight_kg": 120,
+        "service_level": "express"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "12055.68",
+          "derived": false
+        }
+      ],
+      "stated_total": "12055.68",
+      "note": null,
+      "source": {
+        "first_line": 26,
+        "last_line": 29
+      }
+    },
+    {
+      "line_no": 6,
+      "consignment_ref": "FF-8077",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Nashik",
+        "destination": "Pune",
+        "distance_km": 300,
+        "weight_kg": 700,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "8064.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "8064.00",
+      "note": null,
+      "source": {
+        "first_line": 31,
+        "last_line": 34
+      }
+    },
+    {
+      "line_no": 7,
+      "consignment_ref": "FF-8078",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Ahmedabad",
+        "distance_km": 530,
+        "weight_kg": 1500,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "residential_delivery",
+          "label": "Residential delivery",
+          "amount": "250.00",
+          "derived": false
+        },
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "14628.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "14878.00",
+      "note": null,
+      "source": {
+        "first_line": 36,
+        "last_line": 40
+      }
+    },
+    {
+      "line_no": 8,
+      "consignment_ref": "FF-8079",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Pune",
+        "destination": "Mumbai",
+        "distance_km": 180,
+        "weight_kg": 900,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "4838.40",
+          "derived": false
+        }
+      ],
+      "stated_total": "4838.40",
+      "note": null,
+      "source": {
+        "first_line": 42,
+        "last_line": 45
+      }
+    },
+    {
+      "line_no": 9,
+      "consignment_ref": "FF-8080",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Nashik",
+        "destination": "Pune",
+        "distance_km": 300,
+        "weight_kg": 260,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "6048.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "6048.00",
+      "note": null,
+      "source": {
+        "first_line": 47,
+        "last_line": 50
+      }
+    },
+    {
+      "line_no": 10,
+      "consignment_ref": "FF-8081",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Pune",
+        "destination": "Nashik",
+        "distance_km": 240,
+        "weight_kg": 480,
+        "service_level": "express"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "5564.16",
+          "derived": false
+        }
+      ],
+      "stated_total": "5564.16",
+      "note": null,
+      "source": {
+        "first_line": 52,
+        "last_line": 55
+      }
+    },
+    {
+      "line_no": 11,
+      "consignment_ref": "FF-8082",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Pune",
+        "destination": "Kolhapur",
+        "distance_km": 275,
+        "weight_kg": 1500,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "7392.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "7392.00",
+      "note": null,
+      "source": {
+        "first_line": 57,
+        "last_line": 60
+      }
+    },
+    {
+      "line_no": 12,
+      "consignment_ref": "FF-8055",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Pune",
+        "destination": "Nashik",
+        "distance_km": 240,
+        "weight_kg": 260,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "4838.40",
+          "derived": false
+        }
+      ],
+      "stated_total": "4838.40",
+      "note": null,
+      "source": {
+        "first_line": 62,
+        "last_line": 65
+      }
+    },
+    {
+      "line_no": 13,
+      "consignment_ref": "FF-8083",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Nagpur",
+        "distance_km": 340,
+        "weight_kg": 1500,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "9139.20",
+          "derived": false
+        }
+      ],
+      "stated_total": "9139.20",
+      "note": null,
+      "source": {
+        "first_line": 67,
+        "last_line": 70
+      }
+    },
+    {
+      "line_no": 14,
+      "consignment_ref": "FF-8084",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Nagpur",
+        "distance_km": 340,
+        "weight_kg": 260,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "residential_delivery",
+          "label": "Residential delivery",
+          "amount": "250.00",
+          "derived": false
+        },
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "6854.40",
+          "derived": false
+        }
+      ],
+      "stated_total": "7104.40",
+      "note": null,
+      "source": {
+        "first_line": 72,
+        "last_line": 76
+      }
+    },
+    {
+      "line_no": 15,
+      "consignment_ref": "FF-8085",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Ahmedabad",
+        "distance_km": 530,
+        "weight_kg": 1200,
+        "service_level": "express"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "16383.36",
+          "derived": false
+        }
+      ],
+      "stated_total": "16383.36",
+      "note": null,
+      "source": {
+        "first_line": 78,
+        "last_line": 81
+      }
+    },
+    {
+      "line_no": 16,
+      "consignment_ref": "FF-8086",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Hyderabad",
+        "distance_km": 650,
+        "weight_kg": 1500,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "17472.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "17472.00",
+      "note": null,
+      "source": {
+        "first_line": 83,
+        "last_line": 86
+      }
+    },
+    {
+      "line_no": 17,
+      "consignment_ref": "FF-8087",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Pune",
+        "destination": "Mumbai",
+        "distance_km": 180,
+        "weight_kg": 900,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "4838.40",
+          "derived": false
+        }
+      ],
+      "stated_total": "4838.40",
+      "note": null,
+      "source": {
+        "first_line": 88,
+        "last_line": 91
+      }
+    },
+    {
+      "line_no": 18,
+      "consignment_ref": "FF-8088",
+      "booking_date": null,
+      "attributes": {
+        "origin": "Mumbai",
+        "destination": "Bengaluru",
+        "distance_km": 800,
+        "weight_kg": 1500,
+        "service_level": "standard"
+      },
+      "charges": [
+        {
+          "code": "freight_incl_fuel",
+          "label": "Freight incl. fuel surcharge",
+          "amount": "21504.00",
+          "derived": false
+        }
+      ],
+      "stated_total": "21504.00",
+      "note": null,
+      "source": {
+        "first_line": 93,
+        "last_line": 96
+      }
+    }
+  ],
+  "integrity": {
+    "checks": 73,
+    "failures": []
+  }
+}

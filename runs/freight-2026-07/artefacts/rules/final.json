@@ -1,0 +1,36 @@
+{
+  "specs": {
+    "alpine": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/alpine.json",
+    "falcon": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/falcon.json",
+    "sagar": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/sagar.json"
+  },
+  "sources": {
+    "alpine": {
+      "source": "round 1",
+      "adopted_copy": "a",
+      "sessions": [
+        "4f02bef8-ad45-4603-a6ef-bc0fce129177",
+        "0b407419-4011-42c3-a900-90dde701c4ed"
+      ]
+    },
+    "falcon": {
+      "source": "round 1",
+      "adopted_copy": "a",
+      "sessions": [
+        "f731b096-1191-4e5b-9936-0df14c821c81",
+        "d424c9e2-9a24-4eca-9fe1-eecfd63f7c96"
+      ]
+    },
+    "sagar": {
+      "source": "round 1",
+      "adopted_copy": "a",
+      "sessions": [
+        "fb1f97c2-b068-441c-b9e1-07da6d70e9b1",
+        "928ac233-a2db-403b-92ce-5112f41b3059"
+      ]
+    }
+  },
+  "round2": {},
+  "cache_writes": [],
+  "blocking": {}
+}

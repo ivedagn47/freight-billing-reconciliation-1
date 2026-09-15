@@ -1,0 +1,48 @@
+{
+  "_session_id": "64b1af8f-ac81-49be-9b99-d2011445df88",
+  "batch_id": "memo-001",
+  "memos": [
+    {
+      "memo_id": "ALPINE-0726-line-005",
+      "headline": "Alpine invoice ALPINE-0726, consignment AE-3005 (SH-4111): freight rate undetermined at 50 kg chargeable weight.",
+      "summary": "The contract sets one freight rate for consignments under 50 kg and a different rate for consignments over 50 kg. This consignment's chargeable weight is exactly 50.0 kg, which falls in neither band, so no contract rate can be applied to the freight charge billed on this line.",
+      "contract_basis": "Clause 2 sets freight rates by chargeable-weight band: under 50 kg at ₹9.50/kg, over 50 kg at ₹8.25/kg, with chargeable weight defined in clause 1. Neither band, on its wording, covers a chargeable weight of exactly 50 kg.",
+      "action": "Escalate to the contract owner for a decision on which rate band (or an interim rate) applies to consignments at exactly 50 kg chargeable weight; the line is currently billed at the amount shown above pending that decision."
+    },
+    {
+      "memo_id": "FALCON-2026-07A-line-011",
+      "headline": "Falcon invoice FALCON-2026-07A, consignment FF-8011 (SH-4011): detention charge not provided for in contract.",
+      "summary": "The line bills a detention charge at consignee in addition to freight and the fuel surcharge. The contract does not include detention among its chargeable items, so this charge is not supported. Freight and the fuel surcharge together account for the contract amount shown above; the detention charge is the source of the full difference.",
+      "contract_basis": "Clauses 1 and 3 support the base freight and fuel surcharge that make up the contract amount above. Clause 5 states no other accessorial charges are payable under the agreement, and detention is not listed among the accessorials in clause 4.",
+      "action": "Ask the carrier to reissue the line at the contract amount shown above, removing the detention charge, or to issue a credit note for the difference, citing clause 5 (no accessorial charges outside the schedule) and clause 8 (credit notes)."
+    },
+    {
+      "memo_id": "FALCON-2026-07B-line-008",
+      "headline": "Falcon invoice FALCON-2026-07B, line 8, consignment FF-8003 (SH-4003): duplicate of FALCON-2026-07A, line 3.",
+      "summary": "This consignment, FF-8003, was already billed and accounted for on invoice FALCON-2026-07A, line 3. The full amount billed on this line is a repeat of that earlier charge, not a separate freight charge that is due under the contract.",
+      "contract_basis": "No clause is in question here; this is a duplicate line rather than a rate dispute. FF-8003 has already been invoiced in full under FALCON-2026-07A, line 3, so no further amount is payable for it on this invoice.",
+      "action": "Ask the carrier to withdraw this line or issue a credit note for the full amount billed, per clause 8, referencing the original consignment note and noting it duplicates FALCON-2026-07A, line 3."
+    },
+    {
+      "memo_id": "SAGAR-JUL-1-line-003",
+      "headline": "Sagar invoice SAGAR-JUL-1, line 3, consignment SG-7003 (SH-4229): invoice total does not match its own freight components.",
+      "summary": "The freight charge is made up of a weight component and a distance component, which together come to less than the total stated on the invoice for this line. The shipment has no special handling, so no cold-chain premium applies on top of freight. The extra amount on the invoice is not accounted for by any charge shown.",
+      "contract_basis": "Clause 1 defines freight as a weight component (₹6.00/kg of billed weight) plus a distance component (₹2.00/km of booked lane distance); clause 3's cold-chain premium does not apply as the shipment carries no special handling.",
+      "action": "Ask the carrier to correct the line to the contract amount shown above (the sum of the weight and distance components) or to issue a credit note for the difference, citing clause 1."
+    },
+    {
+      "memo_id": "SAGAR-JUL-1-line-009",
+      "headline": "Sagar invoice SAGAR-JUL-1, line 9, consignment SG-7009 (SH-4235): billed amount exceeds the contract freight charge.",
+      "summary": "The freight charge is made up of a weight component and a distance component. Together these are below the amount billed on this line, and the shipment has no special handling, so no cold-chain premium applies on top of freight to account for the difference shown above.",
+      "contract_basis": "Clause 1 defines freight as a weight component (₹6.00/kg of billed weight) plus a distance component (₹2.00/km of booked lane distance); clause 3's cold-chain premium does not apply as the shipment carries no special handling.",
+      "action": "Ask the carrier to reissue the line at the contract amount shown above or to issue a credit note for the difference, citing clause 1."
+    },
+    {
+      "memo_id": "ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13",
+      "headline": "Alpine invoice ALPINE-0726: 5% volume discount applies but the invoice's contract total is undetermined.",
+      "summary": "Alpine tendered 40 consignments in 2026-07, well over the 12-consignment threshold, so the contract's 5% monthly discount applies to this invoice. However, the invoice's overall contract total cannot currently be determined, so the discount's amount cannot be calculated or verified from this invoice as billed.",
+      "contract_basis": "Clause 5: in any calendar month in which the Customer tenders more than 12 consignments, the Carrier applies a 5% discount to the invoice total for that month. The contract does not say how to apply this once part of the invoice total is otherwise undetermined.",
+      "action": "Escalate to finance or the contract owner for a decision on how to apply the 5% discount once the undetermined line item(s) on this invoice are resolved; the consignment count (40) supporting the discount is not itself in question."
+    }
+  ]
+}

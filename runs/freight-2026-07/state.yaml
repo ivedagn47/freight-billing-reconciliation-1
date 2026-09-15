@@ -1,0 +1,1114 @@
+schema_version: 2
+run_id: freight-2026-07
+status: completed
+created_at: '2026-09-15T04:08:46.619+00:00'
+flow:
+  name: freight-reconciliation
+  dot: /Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/freight-reconciliation.dot
+  yml: /Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation/freight-reconciliation.flow.yml
+  dir: /Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation
+  digest: fdc6889b43f4ed1deca5fbfcecd1dcc5daf7ff66b98172457397f6d1d338f104
+config:
+  harness: claude
+  harness_opts: {}
+  fake_scripts: {}
+  supervision: low
+  max_retries: 2
+  stall_after_s: 600.0
+  script_timeout_s: 600.0
+  max_parallel_branches: 4
+  max_fanout_items: 500
+variables:
+  period: 2026-07
+  use_rules_cache: false
+  adjudication_batch_size: 10
+  carrier_ids: ''
+  carriers_config: factory/flows/freight-reconciliation/config/carriers.yml
+  data_root: .
+  invoices_dir: data/invoices
+  memo_batch_size: 8
+  publish_dir: .
+  report_schema: report.schema.json
+  rules_cache_dir: runs/_cache/rate-specs
+  shipments_file: data/shipments.json
+  _run_id: freight-2026-07
+  _run_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07
+  _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts
+  _flow_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/factory/flows/freight-reconciliation
+  manifest: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/discovery/manifest.json
+  rules_plan: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/plan.json
+  extraction_items:
+  - carrier: alpine
+    copy: a
+    round: 1
+    contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+    clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+    vocabulary:
+      service_level:
+      - express
+      - standard
+      special_handling:
+      - cold_chain
+      - fragile
+      - residential
+    invoice_charge_codes:
+    - freight
+    - handling
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+  - carrier: alpine
+    copy: b
+    round: 1
+    contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+    clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+    vocabulary:
+      service_level:
+      - express
+      - standard
+      special_handling:
+      - cold_chain
+      - fragile
+      - residential
+    invoice_charge_codes:
+    - freight
+    - handling
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+  - carrier: falcon
+    copy: a
+    round: 1
+    contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+    clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+    vocabulary:
+      service_level:
+      - express
+      - standard
+      special_handling:
+      - cold_chain
+      - fragile
+      - residential
+    invoice_charge_codes:
+    - detention
+    - express_premium
+    - freight
+    - freight_incl_fuel
+    - fuel_surcharge
+    - residential_delivery
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+  - carrier: falcon
+    copy: b
+    round: 1
+    contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+    clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+    vocabulary:
+      service_level:
+      - express
+      - standard
+      special_handling:
+      - cold_chain
+      - fragile
+      - residential
+    invoice_charge_codes:
+    - detention
+    - express_premium
+    - freight
+    - freight_incl_fuel
+    - fuel_surcharge
+    - residential_delivery
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+  - carrier: sagar
+    copy: a
+    round: 1
+    contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+    clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+    vocabulary:
+      service_level:
+      - express
+      - standard
+      special_handling:
+      - cold_chain
+      - fragile
+      - residential
+    invoice_charge_codes:
+    - cold_chain_premium
+    - freight
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+  - carrier: sagar
+    copy: b
+    round: 1
+    contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+    clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+    vocabulary:
+      service_level:
+      - express
+      - standard
+      special_handling:
+      - cold_chain
+      - fragile
+      - residential
+    invoice_charge_codes:
+    - cold_chain_premium
+    - freight
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+  clauses_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses
+  rate_spec:
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000/rate-spec.json
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001/rate-spec.json
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0002/rate-spec.json
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0003/rate-spec.json
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004/rate-spec.json
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0005/rate-spec.json
+  rules_agreement: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/agreement-1.json
+  rerun_items: []
+  rate_spec_rerun: []
+  rules_final: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/final.json
+  rate_specs:
+    alpine: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/alpine.json
+    falcon: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/falcon.json
+    sagar: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/specs/sagar.json
+  priced: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/pricing/priced.json
+  adjudication_plan: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/batches.json
+  adjudication_batches:
+  - batch_id: adj-001
+    packet: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/packets/adj-001.json
+    item_ids:
+    - SAGAR-JUL-1#3
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/packets/adj-001.json
+  adjudication:
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/adjudicate_fan-0000/adjudications.json
+  adjudications: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/merged.json
+  report: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/report/reconciliation-report.json
+  memo_plan: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/batches.json
+  memo_batches:
+  - batch_id: memo-001
+    packet: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/packets/memo-001.json
+    memo_ids:
+    - ALPINE-0726-line-005
+    - FALCON-2026-07A-line-011
+    - FALCON-2026-07B-line-008
+    - SAGAR-JUL-1-line-003
+    - SAGAR-JUL-1-line-009
+    - ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13
+    inputs:
+    - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/packets/memo-001.json
+  memo_draft:
+  - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000/memo-drafts.json
+  memos_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/index.json
+  publication: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/publication.json
+cursor: null
+nodes:
+  start:
+    kind: start
+    status: completed
+    retries_used: 0
+    attempts: []
+    completed_at: '2026-09-15T04:08:49.618+00:00'
+    edge_taken: start->discover
+  discover:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:08:49.620+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/discover/attempt-1
+      runner_pid: 93799
+      finished_at: '2026-09-15T04:08:50.138+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.124
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:08:49.620+00:00'
+    outputs:
+      manifest: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/discovery/manifest.json
+    gate_evaluations: 1
+    completed_at: '2026-09-15T04:08:50.279+00:00'
+    edge_taken: discover->rules_plan
+  rules_plan:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:08:50.283+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/rules_plan/attempt-1
+      runner_pid: 93810
+      finished_at: '2026-09-15T04:08:50.804+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.075
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:08:50.283+00:00'
+    outputs:
+      plan: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/plan.json
+    completed_at: '2026-09-15T04:08:50.813+00:00'
+    edge_taken: rules_plan->extract_fan
+  extract_fan:
+    kind: dynamic_fanout
+    status: completed
+    retries_used: 0
+    attempts: []
+    started_at: '2026-09-15T04:08:50.824+00:00'
+    completed_at: '2026-09-15T04:09:34.578+00:00'
+  extract_rules:
+    kind: agent
+    status: in_branches
+    parallel: extract_fan
+  extract_join:
+    kind: join
+    status: completed
+    retries_used: 0
+    attempts: []
+    max_retries: 2
+    completed_at: '2026-09-15T04:09:34.578+00:00'
+    edge_taken: extract_join->rules_agree
+  rules_agree:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:09:34.587+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/rules_agree/attempt-1
+      runner_pid: 94366
+      finished_at: '2026-09-15T04:09:35.128+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.131
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:09:34.587+00:00'
+    outputs:
+      agreement: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/agreement-1.json
+    completed_at: '2026-09-15T04:09:35.141+00:00'
+    edge_taken: rules_agree->rerun_fan
+  rerun_fan:
+    kind: dynamic_fanout
+    status: completed
+    retries_used: 0
+    attempts: []
+    started_at: '2026-09-15T04:09:35.155+00:00'
+    completed_at: '2026-09-15T04:09:35.181+00:00'
+  extract_rules_rerun:
+    kind: agent
+    status: in_branches
+    parallel: rerun_fan
+  rerun_join:
+    kind: join
+    status: completed
+    retries_used: 0
+    attempts: []
+    max_retries: 2
+    completed_at: '2026-09-15T04:09:35.181+00:00'
+    edge_taken: rerun_join->rules_final
+  rules_final:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:09:35.191+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/rules_final/attempt-1
+      runner_pid: 94370
+      finished_at: '2026-09-15T04:09:35.747+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.077
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:09:35.191+00:00'
+    outputs:
+      final: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/final.json
+    completed_at: '2026-09-15T04:09:35.760+00:00'
+    edge_taken: rules_final->price
+  price:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:09:35.773+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/price/attempt-1
+      runner_pid: 94372
+      finished_at: '2026-09-15T04:09:36.321+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.123
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:09:35.773+00:00'
+    outputs:
+      priced: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/pricing/priced.json
+    gate_evaluations: 1
+    completed_at: '2026-09-15T04:09:36.424+00:00'
+    edge_taken: price->adjudication_plan
+  adjudication_plan:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:09:36.434+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/adjudication_plan/attempt-1
+      runner_pid: 94378
+      finished_at: '2026-09-15T04:09:36.984+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.074
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:09:36.434+00:00'
+    outputs:
+      plan: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/batches.json
+    completed_at: '2026-09-15T04:09:37.004+00:00'
+    edge_taken: adjudication_plan->adjudicate_fan
+  adjudicate_fan:
+    kind: dynamic_fanout
+    status: completed
+    retries_used: 0
+    attempts: []
+    started_at: '2026-09-15T04:09:37.018+00:00'
+    completed_at: '2026-09-15T04:10:03.046+00:00'
+  adjudicate:
+    kind: agent
+    status: in_branches
+    parallel: adjudicate_fan
+  adjudicate_join:
+    kind: join
+    status: completed
+    retries_used: 0
+    attempts: []
+    max_retries: 2
+    completed_at: '2026-09-15T04:10:03.046+00:00'
+    edge_taken: adjudicate_join->merge_adjudications
+  merge_adjudications:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:10:03.068+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/merge_adjudications/attempt-1
+      runner_pid: 94482
+      finished_at: '2026-09-15T04:10:03.627+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.074
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:10:03.068+00:00'
+    outputs:
+      merged: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/merged.json
+    completed_at: '2026-09-15T04:10:03.644+00:00'
+    edge_taken: merge_adjudications->assemble
+  assemble:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:10:03.659+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/assemble/attempt-1
+      runner_pid: 94485
+      finished_at: '2026-09-15T04:10:04.218+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.072
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:10:03.659+00:00'
+    outputs:
+      report: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/report/reconciliation-report.json
+    completed_at: '2026-09-15T04:10:04.238+00:00'
+    edge_taken: assemble->memo_plan
+  memo_plan:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:10:04.253+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/memo_plan/attempt-1
+      runner_pid: 94490
+      finished_at: '2026-09-15T04:10:04.811+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.074
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:10:04.253+00:00'
+    outputs:
+      plan: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/batches.json
+    completed_at: '2026-09-15T04:10:04.828+00:00'
+    edge_taken: memo_plan->memo_fan
+  memo_fan:
+    kind: dynamic_fanout
+    status: completed
+    retries_used: 0
+    attempts: []
+    started_at: '2026-09-15T04:10:04.843+00:00'
+    completed_at: '2026-09-15T04:11:07.397+00:00'
+  write_memos:
+    kind: agent
+    status: in_branches
+    parallel: memo_fan
+  memo_join:
+    kind: join
+    status: completed
+    retries_used: 0
+    attempts: []
+    max_retries: 2
+    completed_at: '2026-09-15T04:11:07.397+00:00'
+    edge_taken: memo_join->render_memos
+  render_memos:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:11:07.410+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/render_memos/attempt-1
+      runner_pid: 94716
+      finished_at: '2026-09-15T04:11:07.971+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.073
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:11:07.410+00:00'
+    outputs:
+      index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/index.json
+    completed_at: '2026-09-15T04:11:07.988+00:00'
+    edge_taken: render_memos->publish
+  publish:
+    kind: script
+    status: completed
+    retries_used: 0
+    attempts:
+    - index: 1
+      kind: run
+      started_at: '2026-09-15T04:11:08.009+00:00'
+      log_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/logs/publish/attempt-1
+      runner_pid: 94721
+      finished_at: '2026-09-15T04:11:08.571+00:00'
+      exit_code: 0
+      timed_out: false
+      duration_s: 0.074
+      outcome: completed
+    max_retries: 2
+    started_at: '2026-09-15T04:11:08.009+00:00'
+    outputs:
+      publication: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/publication.json
+    completed_at: '2026-09-15T04:11:08.589+00:00'
+    edge_taken: publish->done
+  done:
+    kind: done
+    status: completed
+    retries_used: 0
+    attempts: []
+    completed_at: '2026-09-15T04:11:08.604+00:00'
+parallel:
+  extract_fan:
+    kind: dynamic_fanout
+    join: extract_join
+    status: completed
+    created_at: '2026-09-15T04:08:50.824+00:00'
+    items_var: extraction_items
+    items:
+    - &id001
+      carrier: alpine
+      copy: a
+      round: 1
+      contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+      clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+      vocabulary:
+        service_level:
+        - express
+        - standard
+        special_handling:
+        - cold_chain
+        - fragile
+        - residential
+      invoice_charge_codes:
+      - freight
+      - handling
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+    - &id002
+      carrier: alpine
+      copy: b
+      round: 1
+      contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+      clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+      vocabulary:
+        service_level:
+        - express
+        - standard
+        special_handling:
+        - cold_chain
+        - fragile
+        - residential
+      invoice_charge_codes:
+      - freight
+      - handling
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/alpine-express.md
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/alpine.json
+    - &id003
+      carrier: falcon
+      copy: a
+      round: 1
+      contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+      clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+      vocabulary:
+        service_level:
+        - express
+        - standard
+        special_handling:
+        - cold_chain
+        - fragile
+        - residential
+      invoice_charge_codes:
+      - detention
+      - express_premium
+      - freight
+      - freight_incl_fuel
+      - fuel_surcharge
+      - residential_delivery
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+    - &id004
+      carrier: falcon
+      copy: b
+      round: 1
+      contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+      clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+      vocabulary:
+        service_level:
+        - express
+        - standard
+        special_handling:
+        - cold_chain
+        - fragile
+        - residential
+      invoice_charge_codes:
+      - detention
+      - express_premium
+      - freight
+      - freight_incl_fuel
+      - fuel_surcharge
+      - residential_delivery
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/falcon-freight.md
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/falcon.json
+    - &id005
+      carrier: sagar
+      copy: a
+      round: 1
+      contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+      clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+      vocabulary:
+        service_level:
+        - express
+        - standard
+        special_handling:
+        - cold_chain
+        - fragile
+        - residential
+      invoice_charge_codes:
+      - cold_chain_premium
+      - freight
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+    - &id006
+      carrier: sagar
+      copy: b
+      round: 1
+      contract: /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+      clause_index: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+      vocabulary:
+        service_level:
+        - express
+        - standard
+        special_handling:
+        - cold_chain
+        - fragile
+        - residential
+      invoice_charge_codes:
+      - cold_chain_premium
+      - freight
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/data/contracts/sagar-roadlines.md
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/rules/clauses/sagar.json
+    max_parallel: 6
+    branch_order:
+    - extract_fan-0000
+    - extract_fan-0001
+    - extract_fan-0002
+    - extract_fan-0003
+    - extract_fan-0004
+    - extract_fan-0005
+    branches:
+      extract_fan-0000:
+        index: 0
+        entry: extract_rules
+        status: completed
+        cursor: null
+        context:
+          _branch_id: extract_fan-0000
+          _branch_index: 0
+          _parallel_node: extract_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000
+          item: *id001
+        variables:
+          rate_spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000/rate-spec.json
+        situation: null
+        created_at: '2026-09-15T04:08:50.823+00:00'
+        nodes:
+          extract_rules:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: extract_rules.extract_fan-0000
+              session_id: 4f02bef8-ad45-4603-a6ef-bc0fce129177
+              started_at: '2026-09-15T04:08:50.852+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.24653
+              num_turns: 4
+              outcome: completed
+              finished_at: '2026-09-15T04:09:20.033+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:08:50.852+00:00'
+            outputs:
+              spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000/rate-spec.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:09:20.033+00:00'
+            edge_taken: extract_rules->extract_join
+        started_at: '2026-09-15T04:08:50.841+00:00'
+        completed_at: '2026-09-15T04:09:20.033+00:00'
+      extract_fan-0001:
+        index: 1
+        entry: extract_rules
+        status: completed
+        cursor: null
+        context:
+          _branch_id: extract_fan-0001
+          _branch_index: 1
+          _parallel_node: extract_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001
+          item: *id002
+        variables:
+          rate_spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001/rate-spec.json
+        situation: null
+        created_at: '2026-09-15T04:08:50.824+00:00'
+        nodes:
+          extract_rules:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: extract_rules.extract_fan-0001
+              session_id: 0b407419-4011-42c3-a900-90dde701c4ed
+              started_at: '2026-09-15T04:08:50.906+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.252061
+              num_turns: 4
+              outcome: completed
+              finished_at: '2026-09-15T04:09:21.924+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:08:50.906+00:00'
+            outputs:
+              spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001/rate-spec.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:09:21.924+00:00'
+            edge_taken: extract_rules->extract_join
+        started_at: '2026-09-15T04:08:50.899+00:00'
+        completed_at: '2026-09-15T04:09:21.924+00:00'
+      extract_fan-0002:
+        index: 2
+        entry: extract_rules
+        status: completed
+        cursor: null
+        context:
+          _branch_id: extract_fan-0002
+          _branch_index: 2
+          _parallel_node: extract_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0002
+          item: *id003
+        variables:
+          rate_spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0002/rate-spec.json
+        situation: null
+        created_at: '2026-09-15T04:08:50.824+00:00'
+        nodes:
+          extract_rules:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: extract_rules.extract_fan-0002
+              session_id: f731b096-1191-4e5b-9936-0df14c821c81
+              started_at: '2026-09-15T04:08:50.952+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.289721
+              num_turns: 4
+              outcome: completed
+              finished_at: '2026-09-15T04:09:33.229+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:08:50.952+00:00'
+            outputs:
+              spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0002/rate-spec.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:09:33.229+00:00'
+            edge_taken: extract_rules->extract_join
+        started_at: '2026-09-15T04:08:50.942+00:00'
+        completed_at: '2026-09-15T04:09:33.229+00:00'
+      extract_fan-0003:
+        index: 3
+        entry: extract_rules
+        status: completed
+        cursor: null
+        context:
+          _branch_id: extract_fan-0003
+          _branch_index: 3
+          _parallel_node: extract_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0003
+          item: *id004
+        variables:
+          rate_spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0003/rate-spec.json
+        situation: null
+        created_at: '2026-09-15T04:08:50.824+00:00'
+        nodes:
+          extract_rules:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: extract_rules.extract_fan-0003
+              session_id: d424c9e2-9a24-4eca-9fe1-eecfd63f7c96
+              started_at: '2026-09-15T04:08:51.015+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.289226
+              num_turns: 4
+              outcome: completed
+              finished_at: '2026-09-15T04:09:34.557+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:08:51.015+00:00'
+            outputs:
+              spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0003/rate-spec.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:09:34.557+00:00'
+            edge_taken: extract_rules->extract_join
+        started_at: '2026-09-15T04:08:51.004+00:00'
+        completed_at: '2026-09-15T04:09:34.557+00:00'
+      extract_fan-0004:
+        index: 4
+        entry: extract_rules
+        status: completed
+        cursor: null
+        context:
+          _branch_id: extract_fan-0004
+          _branch_index: 4
+          _parallel_node: extract_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004
+          item: *id005
+        variables:
+          rate_spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004/rate-spec.json
+        situation: null
+        created_at: '2026-09-15T04:08:50.824+00:00'
+        nodes:
+          extract_rules:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: extract_rules.extract_fan-0004
+              session_id: fb1f97c2-b068-441c-b9e1-07da6d70e9b1
+              started_at: '2026-09-15T04:08:51.074+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.225322
+              num_turns: 4
+              outcome: completed
+              finished_at: '2026-09-15T04:09:14.152+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:08:51.074+00:00'
+            outputs:
+              spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004/rate-spec.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:09:14.152+00:00'
+            edge_taken: extract_rules->extract_join
+        started_at: '2026-09-15T04:08:51.064+00:00'
+        completed_at: '2026-09-15T04:09:14.152+00:00'
+      extract_fan-0005:
+        index: 5
+        entry: extract_rules
+        status: completed
+        cursor: null
+        context:
+          _branch_id: extract_fan-0005
+          _branch_index: 5
+          _parallel_node: extract_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0005
+          item: *id006
+        variables:
+          rate_spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0005/rate-spec.json
+        situation: null
+        created_at: '2026-09-15T04:08:50.824+00:00'
+        nodes:
+          extract_rules:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: extract_rules.extract_fan-0005
+              session_id: 928ac233-a2db-403b-92ce-5112f41b3059
+              started_at: '2026-09-15T04:08:51.191+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.224698
+              num_turns: 4
+              outcome: completed
+              finished_at: '2026-09-15T04:09:13.395+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:08:51.191+00:00'
+            outputs:
+              spec: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0005/rate-spec.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:09:13.395+00:00'
+            edge_taken: extract_rules->extract_join
+        started_at: '2026-09-15T04:08:51.138+00:00'
+        completed_at: '2026-09-15T04:09:13.395+00:00'
+    join_state:
+      status: completed
+      folded: []
+      summary: {}
+      reducer_runs: []
+      merged_variables:
+        rate_spec:
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0000/rate-spec.json
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001/rate-spec.json
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0002/rate-spec.json
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0003/rate-spec.json
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0004/rate-spec.json
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0005/rate-spec.json
+      merged_at: '2026-09-15T04:09:34.564+00:00'
+      completed_at: '2026-09-15T04:09:34.578+00:00'
+  rerun_fan:
+    kind: dynamic_fanout
+    join: rerun_join
+    status: completed
+    created_at: '2026-09-15T04:09:35.155+00:00'
+    items_var: rerun_items
+    items: []
+    max_parallel: 6
+    branch_order: []
+    branches: {}
+    join_state:
+      status: completed
+      folded: []
+      summary: {}
+      reducer_runs: []
+      merged_variables:
+        rate_spec_rerun: []
+      merged_at: '2026-09-15T04:09:35.171+00:00'
+      completed_at: '2026-09-15T04:09:35.181+00:00'
+  adjudicate_fan:
+    kind: dynamic_fanout
+    join: adjudicate_join
+    status: completed
+    created_at: '2026-09-15T04:09:37.018+00:00'
+    items_var: adjudication_batches
+    items:
+    - &id007
+      batch_id: adj-001
+      packet: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/packets/adj-001.json
+      item_ids:
+      - SAGAR-JUL-1#3
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/adjudication/packets/adj-001.json
+    max_parallel: 4
+    branch_order:
+    - adjudicate_fan-0000
+    branches:
+      adjudicate_fan-0000:
+        index: 0
+        entry: adjudicate
+        status: completed
+        cursor: null
+        context:
+          _branch_id: adjudicate_fan-0000
+          _branch_index: 0
+          _parallel_node: adjudicate_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/adjudicate_fan-0000
+          item: *id007
+        variables:
+          adjudication: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/adjudicate_fan-0000/adjudications.json
+        situation: null
+        created_at: '2026-09-15T04:09:37.018+00:00'
+        nodes:
+          adjudicate:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: adjudicate.adjudicate_fan-0000
+              session_id: 94ca6fa1-ce0b-4b68-990d-ec131458f806
+              started_at: '2026-09-15T04:09:37.037+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.057627
+              num_turns: 3
+              outcome: completed
+              finished_at: '2026-09-15T04:10:03.015+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:09:37.037+00:00'
+            outputs:
+              decisions: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/adjudicate_fan-0000/adjudications.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:10:03.015+00:00'
+            edge_taken: adjudicate->adjudicate_join
+        started_at: '2026-09-15T04:09:37.025+00:00'
+        completed_at: '2026-09-15T04:10:03.015+00:00'
+    join_state:
+      status: completed
+      folded: []
+      summary: {}
+      reducer_runs: []
+      merged_variables:
+        adjudication:
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/adjudicate_fan-0000/adjudications.json
+      merged_at: '2026-09-15T04:10:03.024+00:00'
+      completed_at: '2026-09-15T04:10:03.046+00:00'
+  memo_fan:
+    kind: dynamic_fanout
+    join: memo_join
+    status: completed
+    created_at: '2026-09-15T04:10:04.843+00:00'
+    items_var: memo_batches
+    items:
+    - &id008
+      batch_id: memo-001
+      packet: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/packets/memo-001.json
+      memo_ids:
+      - ALPINE-0726-line-005
+      - FALCON-2026-07A-line-011
+      - FALCON-2026-07B-line-008
+      - SAGAR-JUL-1-line-003
+      - SAGAR-JUL-1-line-009
+      - ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13
+      inputs:
+      - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/packets/memo-001.json
+    max_parallel: 4
+    branch_order:
+    - memo_fan-0000
+    branches:
+      memo_fan-0000:
+        index: 0
+        entry: write_memos
+        status: completed
+        cursor: null
+        context:
+          _branch_id: memo_fan-0000
+          _branch_index: 0
+          _parallel_node: memo_fan
+          _run_artefact_dir: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000
+          item: *id008
+        variables:
+          memo_draft: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000/memo-drafts.json
+        situation: null
+        created_at: '2026-09-15T04:10:04.843+00:00'
+        nodes:
+          write_memos:
+            kind: agent
+            status: completed
+            retries_used: 0
+            attempts:
+            - index: 1
+              kind: spawn
+              worker_id: write_memos.memo_fan-0000
+              session_id: 64b1af8f-ac81-49be-9b99-d2011445df88
+              started_at: '2026-09-15T04:10:04.870+00:00'
+              launch: launched
+              worker_state: exited
+              exit_code: 0
+              cost_usd: 0.159685
+              num_turns: 3
+              outcome: completed
+              finished_at: '2026-09-15T04:11:07.374+00:00'
+            max_retries: 2
+            started_at: '2026-09-15T04:10:04.870+00:00'
+            outputs:
+              drafts: /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000/memo-drafts.json
+            gate_evaluations: 1
+            completed_at: '2026-09-15T04:11:07.374+00:00'
+            edge_taken: write_memos->memo_join
+        started_at: '2026-09-15T04:10:04.856+00:00'
+        completed_at: '2026-09-15T04:11:07.374+00:00'
+    join_state:
+      status: completed
+      folded: []
+      summary: {}
+      reducer_runs: []
+      merged_variables:
+        memo_draft:
+        - /Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000/memo-drafts.json
+      merged_at: '2026-09-15T04:11:07.384+00:00'
+      completed_at: '2026-09-15T04:11:07.397+00:00'
+situation: null
+pause: null
+abort: null
+revision: 109
+updated_at: '2026-09-15T04:11:08.604+00:00'
+completed_at: '2026-09-15T04:11:08.604+00:00'

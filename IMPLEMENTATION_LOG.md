@@ -1099,3 +1099,67 @@ Live spend for the three dry runs: about $5.29 in workers and $0.59 in orchestra
 - **Launcher exit code:** it reflects the orchestrator session, not the run.
 - **Scale:** discovery and pricing are linear and sequential but not measured beyond 17 documents and 127 lines.
 - **Evidence:** the dry-run outputs are not committed; Phase 8 produces the deliverables and evidence.
+
+---
+
+## Phase 8 — final run, evidence, DESIGN.md (2026-09-15)
+
+### Scope and starting state
+
+The plan's Phase 8 row: "Final clean run, commit evidence, DESIGN.md, CLAUDE.md — deliverables complete." The
+tree was clean at `ac5485a`, the flow validated, the account session limit that ended two Phase 7
+orchestrator sessions had reset, and there were no deliverables at the repository root.
+
+### The final run
+
+- **Command:** `FRESH_EXTRACTION=1 RUN_ID=freight-2026-07 factory/flows/freight-reconciliation/reconcile.sh
+  2026-07`, with the default runs directory (`runs/`) and the default publish directory (the repository root).
+  Fresh extraction means the submitted evidence shows every contract being read, not a cache hit.
+- **Orchestrator (Sonnet, 13 turns, $0.26):** loaded both skills; ran validate, init (`period=2026-07`,
+  `use_rules_cache=false`) and one `advance`, which completed; read `publication.json`; reported correctly.
+  - One Bash call was denied: `python3 -c` reading the published report's summary. This is a shell viewer the
+    skills forbid, and the launcher's `dontAsk` mode refused it. The orchestrator continued with Read and Grep.
+- **Run:** 2 min 22 s. 8 workers, all exited without error, $1.75. 24 node completions, 18 gates passed; no
+  retries, respawns or pauses. All three carriers agreed in round 1 (144 / 2,304 / 144 probes, no
+  differences), with no cache reads or writes.
+- **Published:** 127 lines (122 accept, 4 dispute, 1 escalate), 1 escalated invoice finding, ₹8,832 in dispute,
+  `total_expected` null, 6 memos.
+- **Checked after the run (read-only):**
+  - the report validates against `report.schema.json`;
+  - there is one memo per non-accept item;
+  - the published report and memos are byte-identical to the run's artefacts, and the SHA-256 matches
+    `publication.json`;
+  - `compare_runs.py` against `july-dry-2`, an independent extraction: specs price identically, and amounts,
+    findings, totals, dispositions and memo files are identical.
+- **The Phase 7 adjudication wording fix, first live exercise:** the justification names "the freight charge",
+  and no published prose contains column or code names. The adjudicated line kept its disposition but cited
+  only §1 (the dry runs cited §1 and §3).
+
+### Evidence committed
+
+- `reconciliation-report.json` and `memos/`, as published by the run.
+- `runs/freight-2026-07/` verbatim (291 files, 2.6 MB).
+- `runs/freight-2026-07.orchestrator/`, plus `launcher.log` (the launcher's console output, moved there from
+  `runs/`).
+- **Checked before committing:** no credential patterns and no email addresses; recorded environments hold only
+  `FLOWSTATE_*` and `AGENTCTL_*` variables; no file over 500 KB. Absolute paths to the local checkout remain in
+  the run records, as part of what happened.
+
+### Documentation
+
+- `DESIGN.md`, distilled from this log: how to run it, the submitted run, architecture, validation layers,
+  judgement calls, changes to the kit, and post-implementation notes.
+- `CLAUDE.md`: the deliverables and the committed evidence, which must never be edited by hand.
+
+### Known limitations of the finished system
+
+- **Human approval:** nothing yet lets a person approve a contract reading into the cache after extraction stops.
+- **Duplicate detection:** it re-reads every month's documents; a persistent ledger of billed consignments
+  would scale better.
+- **Branch scaling:** Flowstate rewrites `state.yaml` on every change; behaviour with hundreds of branches is
+  unmeasured.
+- **Volume discounts:** unquantifiable whenever any line of the invoice is undetermined.
+- **Performance:** unmeasured beyond one month's 127 lines.
+- **Orchestrator rules:** they are followed imperfectly and hold because of launcher permissions. The
+  interactive `/reconcile-freight` path relies on the user's own permission settings for the same guarantee.
+- **Timing-sensitive test:** one pre-existing Flowstate test asserts wall time.

@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "/Users/vedangi/.local/bin/claude",
+    "-p",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--tools",
+    "Read,Write,Edit,Glob,Grep",
+    "--allowedTools",
+    "Read,Write,Edit,Glob,Grep",
+    "--disallowedTools",
+    "Bash,WebFetch,WebSearch",
+    "--setting-sources",
+    "",
+    "--disable-slash-commands",
+    "--safe-mode",
+    "--strict-mcp-config",
+    "--permission-prompts",
+    "none",
+    "--session-id",
+    "0b407419-4011-42c3-a900-90dde701c4ed",
+    "--model",
+    "opus",
+    "--permission-mode",
+    "dontAsk",
+    "--max-budget-usd",
+    "5"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/extract_fan-0001",
+  "env": {
+    "AGENTCTL_INVOCATION": "0",
+    "AGENTCTL_SESSION_ID": "0b407419-4011-42c3-a900-90dde701c4ed",
+    "AGENTCTL_WORKER_ID": "extract_rules.extract_fan-0001"
+  },
+  "started_at": "2026-09-15T04:08:50.910+00:00"
+}

@@ -1,0 +1,79 @@
+{
+  "file": "falcon-freight.md",
+  "sha256": "6e37557aad7f22da8103e960de6807385088ff0f4bca6fe8da22726998233ca0",
+  "title": "Carriage Agreement \u2014 Falcon Freight Pvt Ltd",
+  "agreement_ref": "FF/BFC/2024-11",
+  "parties": "BlueFin Commerce (\"the Customer\") and Falcon Freight Pvt Ltd (\"the Carrier\")",
+  "service": "full and part truckload road carriage, all-India lanes",
+  "term": {
+    "start": "2024-12-01",
+    "end": "2026-11-30",
+    "text": "1 December 2024 \u2013 30 November 2026"
+  },
+  "clauses": [
+    {
+      "id": "1",
+      "section": "Freight charges",
+      "text": "Base freight is charged per kilometre of the booked lane distance, according to the consignment's billed weight: - up to and including 500 kg: \u20b918.00 per km - 501 kg to 2,000 kg: \u20b924.00 per km Consignments above 2,000 kg are quoted case by case and are outside this rate card.",
+      "numbers": [
+        "500",
+        "18",
+        "501",
+        "2000",
+        "24"
+      ]
+    },
+    {
+      "id": "2",
+      "section": "Freight charges",
+      "text": "Express service, where booked, carries a premium of 15% of the base freight.",
+      "numbers": [
+        "15"
+      ]
+    },
+    {
+      "id": "3",
+      "section": "Freight charges",
+      "text": "A fuel surcharge of 12% applies to the freight charge (base freight plus express premium, where applicable).",
+      "numbers": [
+        "12"
+      ]
+    },
+    {
+      "id": "4",
+      "section": "Accessorial charges",
+      "text": "Residential delivery (consignee address is a residence, or the booking is flagged residential): \u20b9250.00 flat per consignment.",
+      "numbers": [
+        "250"
+      ]
+    },
+    {
+      "id": "5",
+      "section": "Accessorial charges",
+      "text": "No other accessorial charges are payable under this agreement. Any service outside this schedule requires the Customer's written agreement in advance, evidenced by a rate confirmation referencing this agreement.",
+      "numbers": []
+    },
+    {
+      "id": "6",
+      "section": "Invoicing and payment",
+      "text": "The Carrier invoices fortnightly. Payment is due 30 days from invoice date.",
+      "numbers": [
+        "30"
+      ]
+    },
+    {
+      "id": "7",
+      "section": "Invoicing and payment",
+      "text": "Billing disputes must be raised within 45 days of invoice date. Disputed line items are payable only on resolution; undisputed items remain due.",
+      "numbers": [
+        "45"
+      ]
+    },
+    {
+      "id": "8",
+      "section": "Invoicing and payment",
+      "text": "The Carrier may issue credit notes correcting earlier invoices. A credit note references the original consignment note number and states the invoice it corrects.",
+      "numbers": []
+    }
+  ]
+}

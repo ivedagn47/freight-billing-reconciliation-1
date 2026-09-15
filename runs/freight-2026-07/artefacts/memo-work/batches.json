@@ -1,0 +1,21 @@
+{
+  "batch_size": 8,
+  "memos": 6,
+  "batches": [
+    {
+      "batch_id": "memo-001",
+      "packet": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/packets/memo-001.json",
+      "memo_ids": [
+        "ALPINE-0726-line-005",
+        "FALCON-2026-07A-line-011",
+        "FALCON-2026-07B-line-008",
+        "SAGAR-JUL-1-line-003",
+        "SAGAR-JUL-1-line-009",
+        "ALPINE-0726-finding-adjustment-undetermined-discount-5pct-from-13"
+      ],
+      "inputs": [
+        "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/memo-work/packets/memo-001.json"
+      ]
+    }
+  ]
+}

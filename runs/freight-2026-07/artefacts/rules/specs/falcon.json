@@ -1,0 +1,178 @@
+{
+  "_session_id": "f731b096-1191-4e5b-9936-0df14c821c81",
+  "spec_version": 1,
+  "carrier": "falcon",
+  "contract_file": "falcon-freight.md",
+  "agreement_ref": "FF/BFC/2024-11",
+  "term": {
+    "start": "2024-12-01",
+    "end": "2026-11-30",
+    "clauses": [
+      "header"
+    ]
+  },
+  "quantities": [],
+  "components": [
+    {
+      "name": "base_freight",
+      "kind": "freight",
+      "charge_codes": [
+        "freight",
+        "freight_incl_fuel"
+      ],
+      "calc": {
+        "op": "banded_rate",
+        "basis": {
+          "field": "distance_km"
+        },
+        "select_by": {
+          "field": "billed_weight_kg"
+        },
+        "bands": [
+          {
+            "min": null,
+            "min_inclusive": false,
+            "max": 500,
+            "max_inclusive": true,
+            "rate": 18
+          },
+          {
+            "min": 501,
+            "min_inclusive": true,
+            "max": 2000,
+            "max_inclusive": true,
+            "rate": 24
+          }
+        ]
+      },
+      "description": "Base freight per km of booked lane distance, rate set by billed weight",
+      "clauses": [
+        "1"
+      ]
+    },
+    {
+      "name": "express_premium",
+      "kind": "premium",
+      "charge_codes": [
+        "express_premium"
+      ],
+      "when": {
+        "service_level": "express"
+      },
+      "calc": {
+        "op": "percent_of",
+        "percent": 15,
+        "of": [
+          "base_freight"
+        ]
+      },
+      "description": "Express service premium of 15% of the base freight, where booked",
+      "clauses": [
+        "2"
+      ]
+    },
+    {
+      "name": "fuel_surcharge",
+      "kind": "surcharge",
+      "charge_codes": [
+        "fuel_surcharge",
+        "freight_incl_fuel"
+      ],
+      "calc": {
+        "op": "percent_of",
+        "percent": 12,
+        "of": [
+          "base_freight",
+          "express_premium"
+        ]
+      },
+      "description": "Fuel surcharge of 12% on the freight charge (base freight plus express premium, where applicable)",
+      "clauses": [
+        "3"
+      ]
+    },
+    {
+      "name": "residential_delivery",
+      "kind": "accessorial",
+      "charge_codes": [
+        "residential_delivery"
+      ],
+      "when": {
+        "any": [
+          {
+            "special_handling_includes": "residential"
+          },
+          {
+            "unrecorded": "consignee address is a residence"
+          }
+        ]
+      },
+      "calc": {
+        "op": "flat",
+        "amount": 250
+      },
+      "description": "Residential delivery flat charge per consignment",
+      "clauses": [
+        "4"
+      ]
+    }
+  ],
+  "service_levels": {
+    "allowed": [
+      "express",
+      "standard"
+    ],
+    "clauses": [
+      "header",
+      "2"
+    ]
+  },
+  "invoice_adjustments": [],
+  "gaps": [
+    {
+      "description": "consignments with billed weight over 500 kg and below 501 kg fall in neither weight band and are not rated",
+      "clauses": [
+        "1"
+      ]
+    },
+    {
+      "description": "consignments above 2,000 kg are quoted case by case and are outside the rate card",
+      "clauses": [
+        "1"
+      ]
+    },
+    {
+      "description": "any service outside the schedule requires the Customer's advance written agreement evidenced by a rate confirmation referencing the agreement; no such rates are stated in the contract",
+      "clauses": [
+        "5"
+      ]
+    }
+  ],
+  "non_pricing": [
+    {
+      "clauses": [
+        "5"
+      ],
+      "reason": "states that no other accessorial charges are payable; reflected by providing no component for any other accessorial charge code (e.g. detention)"
+    },
+    {
+      "clauses": [
+        "6"
+      ],
+      "reason": "invoicing frequency and payment terms"
+    },
+    {
+      "clauses": [
+        "7"
+      ],
+      "reason": "billing dispute procedure"
+    },
+    {
+      "clauses": [
+        "8"
+      ],
+      "reason": "credit note procedure"
+    }
+  ],
+  "unrepresentable": []
+}

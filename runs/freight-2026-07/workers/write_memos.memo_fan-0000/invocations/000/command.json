@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "/Users/vedangi/.local/bin/claude",
+    "-p",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--tools",
+    "Read,Write,Edit,Glob,Grep",
+    "--allowedTools",
+    "Read,Write,Edit,Glob,Grep",
+    "--disallowedTools",
+    "Bash,WebFetch,WebSearch",
+    "--setting-sources",
+    "",
+    "--disable-slash-commands",
+    "--safe-mode",
+    "--strict-mcp-config",
+    "--permission-prompts",
+    "none",
+    "--session-id",
+    "64b1af8f-ac81-49be-9b99-d2011445df88",
+    "--model",
+    "sonnet",
+    "--permission-mode",
+    "dontAsk",
+    "--max-budget-usd",
+    "2"
+  ],
+  "cwd": "/Users/vedangi/Downloads/freight-billing-reconciliation/runs/freight-2026-07/artefacts/branches/memo_fan-0000",
+  "env": {
+    "AGENTCTL_INVOCATION": "0",
+    "AGENTCTL_SESSION_ID": "64b1af8f-ac81-49be-9b99-d2011445df88",
+    "AGENTCTL_WORKER_ID": "write_memos.memo_fan-0000"
+  },
+  "started_at": "2026-09-15T04:10:04.876+00:00"
+}

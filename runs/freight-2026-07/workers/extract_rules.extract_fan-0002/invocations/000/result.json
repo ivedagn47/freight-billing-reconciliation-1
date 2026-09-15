@@ -1,0 +1,34 @@
+{
+  "completed": true,
+  "cost_usd": 0.28972149999999997,
+  "events": 27,
+  "init": {
+    "agents": [
+      "claude",
+      "Explore",
+      "general-purpose",
+      "Plan"
+    ],
+    "mcp_servers": [],
+    "memory_paths": null,
+    "messaging_socket_path": "/tmp/cc-socks/93846.sock",
+    "permissionMode": "dontAsk",
+    "plugins": [],
+    "skills": [],
+    "slash_commands": [],
+    "tools": [
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ]
+  },
+  "is_error": false,
+  "model": "claude-opus-5",
+  "num_turns": 4,
+  "permission_denials": [],
+  "result_text": "I wrote the Falcon rate spec (copy a, round 1) to `rate-spec.json` at the path you gave. I checked it by hand against the list at the end of the task; the automated checks haven't run on it yet.\n\n**How it prices a consignment**\n- **Base freight (clause 1):** a rate per km of lane distance, chosen by billed weight: up to and including 500 kg at \u20b918.00, and 501 kg to 2,000 kg at \u20b924.00. It can be billed under `freight` or `freight_incl_fuel`.\n- **Express premium (clause 2):** 15% of base freight, only when the service level is `express`. It is billed under `express_premium`.\n- **Fuel surcharge (clause 3):** 12% of base freight plus the express premium. The express premium counts as 0 when the service isn't express. It is billed under `fuel_surcharge` or `freight_incl_fuel`.\n- **Residential delivery (clause 4):** \u20b9250 flat, billed under `residential_delivery`. It applies when the booking is flagged `residential` or when \"consignee address is a residence\". The second part isn't in the shipment records, so I kept it as an `unrecorded` condition.\n- **Detention:** no component lists `detention`, because clause 5 says no other extra charges are payable. Any detention billed will be treated as a charge the contract doesn't provide for.\n- **Service levels:** both `express` and `standard` are allowed, since the contract never limits services and clause 2 prices express.\n- **Discounts:** the contract has none, so there are no invoice adjustments.\n\n**Recorded as gaps (not rated, so a person decides)**\n- A weight over 500 kg but below 501 kg falls in neither band, because the contract words them as \"up to and including 500\" and \"501 to 2,000\". I left that range uncovered rather than stretch a band.\n- Consignments above 2,000 kg are \"quoted case by case\".\n- Under clause 5, other services need the customer's written agreement in advance and a rate confirmation. The contract gives no rates for them.\n\nClauses 5 to 8 are listed as not affecting price (clause 5 is also a gap). Nothing is marked as inexpressible. Every clause is cited, and every number in the spec appears in the clause it cites.",
+  "session_id": "f731b096-1191-4e5b-9936-0df14c821c81",
+  "subtype": "success"
+}
