@@ -184,7 +184,7 @@ def _load_yml(yml_path: Path, flow_dir: Path, issues: Issues):
     if not isinstance(data, dict):
         issues.add("yaml_error", "flow.yml must be a mapping", file=str(yml_path))
         return variables, schemas
-    for key in sorted(set(data) - {"output_schemas", "variables", "description"}):
+    for key in sorted(set(data) - {"output_schemas", "variables", "description", "digest_include"}):
         issues.add("unsupported_key", f"unknown top-level key {key!r}", file=str(yml_path))
 
     for name, spec in (data.get("variables") or {}).items():
@@ -252,6 +252,33 @@ def _load_yml(yml_path: Path, flow_dir: Path, issues: Issues):
             bindings.append(binding)
         schemas[sname] = OutputSchema(name=sname, files=files, bindings=bindings)
     return variables, schemas
+
+
+def _digest_include(yml_path: Path, flow_dir: Path, issues: Issues) -> list[Path]:
+    """flow.yml `digest_include`: glob patterns, relative to the flow directory, for files the flow's scripts
+    and gates depend on without naming them as node attributes (an imported package, config files). They
+    join the flow digest, so changing one after init is reported as flow_changed."""
+    try:
+        data = yaml.safe_load(yml_path.read_text()) or {}
+    except (OSError, yaml.YAMLError):
+        return []  # already reported by _load_yml
+    patterns = data.get("digest_include") if isinstance(data, dict) else None
+    if patterns is None:
+        return []
+    if not isinstance(patterns, list) or not all(isinstance(p, str) and p.strip() for p in patterns):
+        issues.add("invalid_digest_include", "digest_include must be a list of glob patterns", file=str(yml_path))
+        return []
+    base, files = flow_dir.resolve(), []
+    for pattern in patterns:
+        if Path(pattern).is_absolute() or ".." in Path(pattern).parts:
+            issues.add("invalid_digest_include", f"pattern {pattern!r} must stay inside the flow directory",
+                       file=str(yml_path))
+            continue
+        matched = sorted(p for p in base.glob(pattern) if p.is_file() and "__pycache__" not in p.parts)
+        if not matched:
+            issues.add("invalid_digest_include", f"pattern {pattern!r} matches no files", file=str(yml_path))
+        files += matched
+    return files
 
 
 def _digest(paths: list[Path]) -> str:
@@ -334,6 +361,7 @@ def check_flow(dot_path: Path, yml_path: Path) -> tuple[Flow | None, Issues]:
     produced |= {n.summary_var for n in nodes.values() if n.kind == "join" and n.summary_var}
 
     referenced = [dot_path, yml_path]
+    referenced += _digest_include(yml_path, flow_dir, issues)
     referenced += [f.schema_path for s in schemas.values() for f in s.files]
     referenced += [n.prompt_template for n in nodes.values()] + [n.script for n in nodes.values()]
     referenced += [n.reducer_script for n in nodes.values()]

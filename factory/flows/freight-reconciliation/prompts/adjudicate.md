@@ -66,7 +66,8 @@ Write one JSON file at exactly this path: {_run_artefact_dir}/adjudications.json
 - `clauses`: ids of the clauses in that item's carrier contract that support the decision (`[]` only if no
   clause bears on it). Code appends the clause references to your justification, so you need not repeat them.
 - `justification`: at most 600 characters, in plain language for the carrier-relations team: what the
-  issue is and why this disposition. Do not use internal flag names. If you mention a figure (an amount, a
+  issue is and why this disposition. Do not use internal flag names, invoice column names (such as `freight_rs`) or charge codes; name charges in
+  plain words ("the freight charge"). If you mention a figure (an amount, a
   weight, a distance, a percentage), copy it exactly from the packet; a check rejects any figure that is not
   in the packet. Do no arithmetic.
 

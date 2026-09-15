@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Priced lines and policy decisions (script output)",
+  "type": "object",
+  "required": [
+    "priced",
+    "planned"
+  ],
+  "properties": {
+    "priced": {
+      "type": "object",
+      "required": [
+        "tolerance",
+        "lines",
+        "invoice_findings",
+        "invoices"
+      ],
+      "properties": {
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "item_id",
+              "invoice",
+              "carrier",
+              "billed_amount",
+              "expected_amount",
+              "delta",
+              "flags"
+            ]
+          }
+        },
+        "invoice_findings": {
+          "type": "array"
+        },
+        "invoices": {
+          "type": "array",
+          "minItems": 1
+        }
+      }
+    },
+    "planned": {
+      "type": "object",
+      "required": [
+        "decisions",
+        "needs_judgement"
+      ],
+      "properties": {
+        "decisions": {
+          "type": "object"
+        },
+        "needs_judgement": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

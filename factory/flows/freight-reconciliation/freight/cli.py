@@ -3,8 +3,13 @@
     python -m freight discover --invoices DIR --carriers YML --period YYYY-MM --out FILE --documents DIR
     python -m freight clauses --contract MD --out FILE
     python -m freight check-spec --spec FILE [--clauses FILE] [--vocabulary FILE] [--carrier ID] [--item JSON]
-    python -m freight price --manifest FILE --documents DIR --shipments FILE --spec CARRIER=FILE ... --policy YML --out FILE
-    python -m freight assemble --priced FILE --policy YML --schema FILE --out FILE [--adjudications FILE]
+    python -m freight check-scope --manifest FILE
+    python -m freight price --manifest FILE --documents DIR --shipments FILE (--spec CARRIER=FILE ... | --specs-json JSON)
+                            --policy YML --out FILE
+    python -m freight check-priced --manifest FILE --documents DIR --priced FILE
+    python -m freight assemble --priced FILE --policy YML --schema FILE --out FILE [--adjudications FILE] [--manifest FILE]
+    python -m freight publish --report FILE --priced FILE --manifest FILE --memos-index FILE --carriers YML
+                              --schema FILE --dest DIR --out FILE
 
     python -m freight rules-plan --carriers YML --root DIR --shipments FILE --out-dir DIR --out FILE
                                  [--manifest FILE | --carrier-ids a,b] --cache-dir DIR --use-cache true|false
@@ -28,8 +33,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import (adjudication, agreement, audit, contracts, documents, memos, policy, pricing, ratespec, report, rules,
-               tracing)
+from . import (adjudication, agreement, audit, contracts, coverage, documents, memos, policy, pricing, publish,
+               ratespec, report, rules, tracing)
 
 MAX_STDERR_PROBLEMS = 8
 
@@ -93,10 +98,15 @@ def cmd_check_spec(args) -> dict:
 def cmd_price(args) -> dict:
     manifest = _read(args.manifest)
     docs = [_read(str(p)) for p in sorted(Path(args.documents).glob("*.json"))]
-    specs = {}
-    for pair in args.spec:
-        carrier, _, path = pair.partition("=")
-        specs[carrier] = ratespec.load(Path(path))
+    pairs = [tuple(p.partition("=")[::2]) for p in args.spec or []]
+    if args.specs_json:
+        mapping = _json_text(args.specs_json, "--specs-json")
+        if not isinstance(mapping, dict):
+            raise ValueError("--specs-json must be a JSON object mapping carrier to rate spec path")
+        pairs += list(mapping.items())
+    if not pairs:
+        raise ValueError("give --spec CARRIER=PATH or --specs-json")
+    specs = {carrier: ratespec.load(Path(path)) for carrier, path in pairs}
     rules_doc = policy.load(Path(args.policy))
     priced = pricing.price(docs, manifest["in_scope"], _read(args.shipments), specs, str(rules_doc["tolerance_inr"]))
     planned = policy.apply(priced, rules_doc)
@@ -112,7 +122,8 @@ def cmd_assemble(args) -> dict:
     if isinstance(adjudications.get("decisions"), dict):
         adjudications = adjudications["decisions"]
     assembled = report.assemble(bundle["priced"], bundle["planned"], rules_doc, adjudications)
-    report.verify(assembled, bundle["priced"], bundle["planned"], Path(args.schema))
+    in_scope_lines = coverage.in_scope_line_count(_read(args.manifest)) if args.manifest else None
+    report.verify(assembled, bundle["priced"], bundle["planned"], Path(args.schema), in_scope_lines)
     _write(args.out, assembled)
     return {"lines": assembled["summary"]["line_count"], "counts": assembled["summary"]["counts_by_disposition"],
             "memo_items": len(report.memo_items(assembled))}
@@ -214,6 +225,30 @@ def cmd_check_memos(args) -> dict:
     return {"batch_id": item["batch_id"], "memos": len(item["memo_ids"])}
 
 
+def cmd_check_scope(args) -> dict:
+    manifest = _read(args.manifest)
+    problems = coverage.check_scope(manifest)
+    if problems:
+        raise coverage.CoverageError(problems)
+    return {"period": manifest["period"], "in_scope": manifest["in_scope"],
+            "lines": coverage.in_scope_line_count(manifest)}
+
+
+def cmd_check_priced(args) -> dict:
+    bundle = _read(args.priced)
+    problems = coverage.check_priced(_read(args.manifest), Path(args.documents), bundle)
+    if problems:
+        raise coverage.CoverageError(problems)
+    return {"lines": len(bundle["priced"]["lines"]), "needs_judgement": len(bundle["planned"]["needs_judgement"])}
+
+
+def cmd_publish(args) -> dict:
+    record = publish.publish(Path(args.report), _read(args.priced), _read(args.manifest), _read(args.memos_index),
+                             documents.load_carriers(Path(args.carriers)), Path(args.schema), Path(args.dest))
+    _write(args.out, record)
+    return {"dest": record["dest"], "memos": len(record["memos"]), "summary": record["summary"]}
+
+
 def cmd_render_memos(args) -> dict:
     batches = _read(args.batches)["batches"]
     docs = [_read(p) for p in _json_list(args.drafts_json, "--drafts-json")]
@@ -238,9 +273,13 @@ def build_parser() -> argparse.ArgumentParser:
     command("discover", ("--invoices", "--carriers", "--period", "--out", "--documents"))
     command("clauses", ("--contract", "--out"))
     command("check-spec", ("--spec",), ("--clauses", "--vocabulary", "--carrier", "--item"))
-    p = command("price", ("--manifest", "--documents", "--shipments", "--policy", "--out"))
-    p.add_argument("--spec", action="append", required=True, help="CARRIER=PATH")
-    command("assemble", ("--priced", "--policy", "--schema", "--out"), ("--adjudications",))
+    p = command("price", ("--manifest", "--documents", "--shipments", "--policy", "--out"), ("--specs-json",))
+    p.add_argument("--spec", action="append", help="CARRIER=PATH")
+    command("assemble", ("--priced", "--policy", "--schema", "--out"), ("--adjudications", "--manifest"))
+    command("check-scope", ("--manifest",))
+    command("check-priced", ("--manifest", "--documents", "--priced"))
+    command("publish", ("--report", "--priced", "--manifest", "--memos-index", "--carriers", "--schema", "--dest",
+                        "--out"))
     p = command("rules-plan", ("--carriers", "--root", "--shipments", "--out-dir", "--out"),
                 ("--manifest", "--carrier-ids", "--cache-dir"))
     p.add_argument("--use-cache", choices=("true", "false"), default="true")
@@ -263,10 +302,12 @@ COMMANDS = {"discover": cmd_discover, "clauses": cmd_clauses, "check-spec": cmd_
             "rules-final": cmd_rules_final, "audit-worker": cmd_audit_worker,
             "adjudication-plan": cmd_adjudication_plan, "check-adjudications": cmd_check_adjudications,
             "merge-adjudications": cmd_merge_adjudications, "memo-plan": cmd_memo_plan, "check-memos": cmd_check_memos,
-            "render-memos": cmd_render_memos}
+            "render-memos": cmd_render_memos, "check-scope": cmd_check_scope, "check-priced": cmd_check_priced,
+            "publish": cmd_publish}
 ERRORS = (documents.DiscoveryError, documents.ParseError, contracts.ContractError, ratespec.SpecError,
           pricing.PricingError, policy.PolicyError, report.AssemblyError, rules.RulesError, agreement.AgreementError,
-          audit.AuditError, adjudication.AdjudicationError, memos.MemoError, OSError, ValueError, KeyError)
+          audit.AuditError, adjudication.AdjudicationError, memos.MemoError, coverage.CoverageError,
+          publish.PublishError, OSError, ValueError, KeyError)
 
 
 def _explain(command: str, exc: Exception, problems: list[str] | None) -> str:

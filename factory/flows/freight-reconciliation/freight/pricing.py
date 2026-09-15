@@ -108,9 +108,9 @@ def _gap(component: dict, value: Decimal) -> dict:
                                          (value == to_decimal(b["max"]) and not b["max_inclusive"]))
 
     if all(below(b) for b in bands) or all(above(b) for b in bands):
-        return flag("OUTSIDE_RATE_CARD", f"{component['name']}: {value} is outside every rate band in the contract",
-                    component["clauses"], component=component["name"], value=str(value))
-    return flag("CONTRACT_GAP", f"{component['name']}: no rate band covers {value}; the contract does not "
+        return flag("OUTSIDE_RATE_CARD", f"the {component['kind']} charge: {value} is outside every rate band the "
+                    "contract states", component["clauses"], component=component["name"], value=str(value))
+    return flag("CONTRACT_GAP", f"the {component['kind']} charge: no rate band covers {value}; the contract does not "
                 "determine this price", component["clauses"], component=component["name"], value=str(value))
 
 
@@ -155,7 +155,7 @@ def evaluate(spec: dict, shipment: dict) -> dict:
                 depends = [name for name in calc["of"] if name in unverifiable]
                 parts = [amounts[name] for name in calc["of"]]
                 if depends:
-                    flags.append(flag("CONDITION_UNVERIFIABLE", f"{c['name']} is a percentage of {', '.join(depends)}, "
+                    flags.append(flag("CONDITION_UNVERIFIABLE", f"the {c['kind']} charge is a percentage of charges "
                                       "whose condition depends on facts the shipment record does not hold",
                                       c["clauses"], component=c["name"], depends_on=depends))
                 elif all(p is not None for p in parts):
@@ -307,7 +307,8 @@ def price_invoice_line(doc: dict, line: dict, spec: dict, shipments_by_ref: dict
         "billed_amount": fmt(billed), "expected_amount": None if expected is None else fmt(expected),
         "delta": None if delta is None else fmt(delta),
         "contract_file": spec["contract_file"],
-        "contract_clauses": (evaluation or {}).get("clauses", []),
+        # a later billing of a consignment expects nothing; no contract clause is what makes that amount zero
+        "contract_clauses": [] if duplicate else (evaluation or {}).get("clauses", []),
         "components": (evaluation or {}).get("components", []),
         "quantities": (evaluation or {}).get("quantities", {}),
         "billed_charges": billed_charges,
@@ -360,6 +361,21 @@ def price_credit_line(doc: dict, line: dict, originals: dict, credits_issued: di
 
 # ---------------------------------------------------------------- invoice level
 
+def adjustment_terms(adj: dict) -> tuple[str, str]:
+    """(description, id) of an invoice adjustment, from what it does rather than the name a rate spec gave it,
+    so agreeing extractions, and separate runs, describe and identify the same term identically. Count
+    conditions are stated as the equivalent inclusive bound ("more than 12" is "13 or more")."""
+    (op, bound), = adj["when"]["consignments_in_billing_month"].items()
+    percent = format(to_decimal(adj["calc"]["percent"]).normalize(), "f")
+    if op in ("gt", "gte"):
+        least = bound + 1 if op == "gt" else bound
+        return (f"{percent}% {adj['kind']} for {least} or more consignments in the billing month",
+                f"{adj['kind']}-{percent}pct-from-{least}")
+    most = bound - 1 if op == "lt" else bound
+    return (f"{percent}% {adj['kind']} for {most} or fewer consignments in the billing month",
+            f"{adj['kind']}-{percent}pct-upto-{most}")
+
+
 def _count_condition(condition: dict, count: int) -> bool:
     op, bound = next(iter(condition.items()))
     return {"gt": count > bound, "gte": count >= bound, "lt": count < bound, "lte": count <= bound}[op]
@@ -378,32 +394,33 @@ def invoice_level(doc: dict, spec: dict, priced_lines: list[dict], shipments: li
         month = doc["billing_period"]
         count = sum(1 for s in shipments if s["carrier"] == doc["carrier"] and s["ship_date"][:7] == month)
         applies = _count_condition(adj["when"]["consignments_in_billing_month"], count)
+        label, slug = adjustment_terms(adj)
         amount = Decimal(0)
         if applies:
             amount = None if lines_expected is None else \
                 round_inr(lines_expected * to_decimal(adj["calc"]["percent"]) / Decimal(100))
-        adjustments.append({"name": adj["name"], "kind": adj["kind"], "applies": applies,
+        adjustments.append({"name": slug, "description": label, "kind": adj["kind"], "applies": applies,
                             "consignments_in_billing_month": count, "expected_amount": None if amount is None else fmt(amount),
                             "clauses": adj["clauses"]})
         if amount is None:
             adjustments_expected = None
-            findings.append({"finding_id": f"{doc['doc_id']}!ADJUSTMENT_UNDETERMINED!{adj['name']}", "invoice": doc["doc_id"],
+            findings.append({"finding_id": f"{doc['doc_id']}!ADJUSTMENT_UNDETERMINED!{slug}", "invoice": doc["doc_id"],
                              "code": "ADJUSTMENT_UNDETERMINED", "direction": "undetermined", "amount_impact": None,
-                             "description": f"{adj['name']} applies ({count} consignments in {month}) but the invoice's "
-                                            "contract total is undetermined", "clauses": adj["clauses"],
-                             "details": {"adjustment": adj["name"], "consignments_in_billing_month": count}})
+                             "description": f"the contract's {label} applies ({count} consignments in {month}) but the "
+                                            "invoice's contract total is undetermined", "clauses": adj["clauses"],
+                             "details": {"adjustment": slug, "consignments_in_billing_month": count}})
             continue
         if adjustments_expected is not None:
             adjustments_expected += amount
         impact = amount - stated_discount
         if abs(impact) > tolerance:
-            findings.append({"finding_id": f"{doc['doc_id']}!ADJUSTMENT_MISMATCH!{adj['name']}", "invoice": doc["doc_id"],
+            findings.append({"finding_id": f"{doc['doc_id']}!ADJUSTMENT_MISMATCH!{slug}", "invoice": doc["doc_id"],
                              "code": "ADJUSTMENT_MISMATCH", "direction": "over" if impact > 0 else "under",
                              "amount_impact": fmt(impact),
-                             "description": f"{adj['name']}: the contract entitles BlueFin to {fmt(amount)} "
+                             "description": f"the contract's {label} entitles BlueFin to {fmt(amount)} "
                                             f"({count} consignments in {month}); the invoice deducts {fmt(stated_discount)}",
                              "clauses": adj["clauses"],
-                             "details": {"adjustment": adj["name"], "expected": fmt(amount),
+                             "details": {"adjustment": slug, "expected": fmt(amount),
                                          "invoiced": fmt(stated_discount), "consignments_in_billing_month": count}})
 
     for failure in doc["integrity"]["failures"]:

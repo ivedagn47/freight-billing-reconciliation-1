@@ -941,3 +941,161 @@ comes from the final run in Phase 8.
 - **After a stop:** when extraction stops for a human (round 2 disagreement or `unrepresentable`), there is
   no tooling yet for a person to supply or approve a spec.
 - **Flow digest:** it still does not cover the imported `freight` package (Phase 7).
+
+---
+
+## Phase 7 — reconciliation flow, reconcile-freight skill, July dry runs (2026-09-14)
+
+### Scope and starting state
+
+The plan's Phase 7 row: "Flow wiring, the reconcile-freight skill, a full July dry run, then fixes. Done when
+the report validates", plus a proposed second run "to show numbers are identical across runs and to check how
+much dispositions vary". The phase started from a clean tree at `2d97825`. Every Phase 5–6 building block
+existed; there was no top-level DOT or flow.yml, no reconcile skill, and the flow digest did not cover the
+`freight` package (a Phase 5 limitation).
+
+### What was built
+
+| Piece | Responsibility |
+|---|---|
+| `freight-reconciliation.dot` + `.flow.yml` | The full graph: 25 nodes (11 script, 4 agent, 4 fan-outs, 4 joins, start, done), gates on 6 edges |
+| `freight/coverage.py` | `check_scope` (nothing unresolved, something in scope) and `check_priced` (every in-scope line priced exactly once, every line and finding decided or offered for judgement) |
+| `freight/publish.py` | Re-verify the report and the run's memos, then publish `reconciliation-report.json` and `memos/` |
+| `cli.py` | `check-scope`, `check-priced`, `publish`; `price --specs-json`; `assemble --manifest` (one row per in-scope line) |
+| `scripts/`, `gates/` | `discover.sh`, `price.sh`, `assemble.sh`, `publish.sh`, `_paths.sh`; gates `scope-resolved.sh`, `priced-covers-scope.sh`; `rules-plan.sh` and `memo-plan.sh` resolve repository-relative paths |
+| `definitions/` | `manifest`, `priced`, `publication`, and `reconciliation-report` (a copy of `report.schema.json`, kept identical by a test) |
+| `orchestrator/lib/flowstate/loader.py` | `digest_include` in flow.yml: globs inside the flow directory join the flow digest |
+| `.claude/skills/reconcile-freight/SKILL.md` | Entry skill: validate, init with only the inputs given, supervise with graph-orchestrator using a table of this flow's situations, report from `publication.json` |
+| `reconcile.sh` | Headless launcher for a real orchestrator session with that skill |
+| `tests/live/compare_runs.py` | Compare two completed runs |
+
+### Decisions and why
+
+- **Parsing is one script node, not the planned per-file fan-out (deviation).** Phase 3 recorded that every
+  branch rewrites `state.yaml`. Parsing all 17 documents is cheap sequential code, so a fan-out would add
+  orchestration cost that grows with the number of files for no gain. Discovery is gated by `scope-resolved`.
+- **Assembly comes before memos** (the plan listed memos first). Memos are written from the verified report,
+  so every memo's facts table shows exactly what is published.
+- **Coverage gates after `discover` and `price`.** At volume the risk is a silently dropped or duplicated line.
+  These gates sit on script nodes, so under graph-orchestrator's rules a failure pauses for a human.
+- **Publish re-verifies instead of trusting upstream.** Before anything reaches its destination it checks:
+  - the schema and every report invariant;
+  - one row per in-scope line, counted from the manifest;
+  - exactly one memo per non-accept row.
+
+  It never deletes files it did not publish.
+- **`digest_include` is a Flowstate change**, recorded for DESIGN.md. It covers `freight/**/*.py`,
+  `config/*.yml` and `scripts/_paths.sh`, so editing pricing code, policy or carrier config mid-run gives
+  `flow_changed`, which both skills already treat as a pause.
+- **Inputs default to repository files, and relative paths are resolved against the repository root**
+  (`_paths.sh`). This is the lesson of the Phase 6 relative cache path. `init --var period=2026-07` is a
+  complete run.
+- **The report is validated against the fixed contract twice.** Flowstate validates the `assemble` output
+  against the flow's copy of the schema (definitions must live in the flow directory; a test keeps the copy
+  identical). `assemble` and `publish` also validate against `report.schema.json` itself.
+- **The skill separates domain meaning from generic supervision.** graph-orchestrator keeps the decision
+  procedure; reconcile-freight only says what this flow's situations mean. For example:
+  - a failed tracing gate → retry;
+  - a failed audit gate → respawn, since a retry cannot remove what the transcript shows;
+  - an extraction that cannot be adopted → pause.
+
+  It forbids the orchestrator to suggest dispositions, amounts, clause readings or memo text, and its final
+  report copies figures from `publication.json`.
+- **The launcher mirrors the Phase 4 live drill.** Bash is limited to `orchestrator/bin/flowstate`, plus
+  Read, Grep, Glob and Skill. There is no Write or Edit, and the inherited session variables are removed.
+- **Dry runs publish into `runs/_phase7-dry/`, not the repository root.** The deliverables come from Phase 8.
+
+### Dry run 1 (`runs/_phase7-dry/july-dry-1`, not committed)
+
+- **Orchestrator (Sonnet):** loaded both skills with the Skill tool; ran validate, init with `period` and
+  `publish_dir` only, and one `advance`, which completed; then read `publication.json`. 9 turns, $0.25, no
+  permission denials, no Write or Edit.
+- **Run:** 2.5 minutes, 8 workers (6 Opus extraction, 1 adjudication batch, 1 memo batch), $1.77. 18 gates
+  passed; no retries, respawns or pauses.
+- **Extraction:** all three carriers agreed in round 1 (144 / 2,304 / 144 probes); 3 cache entries written.
+- **Pricing:** 127 in-scope lines. Policy decided 126; one line was left open for adjudication (an invoice
+  line whose own charges do not add up to its total). One invoice finding.
+- **Published:** 122 accept, 4 dispute, 1 escalate; 1 escalated invoice finding; 6 memos. The report was
+  verified at `assemble` and again at `publish`.
+- **What was checked:** engine behaviour against the approved rules, not against any expected answer.
+  - Every flagged line's disposition followed from its flags as `policy.yml` prescribes.
+  - Every parser's attribute keys match the attribute-mismatch check, so a dispute with no explaining flag is
+    a genuine amount difference, not a parser gap.
+
+### Found in dry run 1 and fixed
+
+1. **Published output depended on names an extraction worker chose.**
+   - Finding ids and memo file names embedded the spec's adjustment name (`...-volume_discount`), and its
+     description showed it ("Volume_discount applies...").
+   - Gap messages embedded component names.
+   - Two agreeing extractions could therefore publish different ids and text for identical money.
+
+   Fix: adjustments are described and identified by what they do (`pricing.adjustment_terms`, e.g.
+   `discount-5pct-from-13`, with count conditions stated as inclusive bounds), and flags name the charge's
+   kind. `test_phase7_determinism.py` shows a renamed but equivalent spec produces identical text and ids.
+2. **A duplicate billing cited its first billing's clauses** as `contract_clause`, although its expected 0
+   comes from the duplicate rule. The memo writer then claimed those clauses say a consignment is billed once.
+   Fix: a duplicate cites no clause.
+3. **A memo named an invoice column** (`freight_rs`). Fix: the memo style guide requires plain words for charges.
+
+### Tests
+
+- **Freight:** 207 pass without tokens (193 through Phase 6 + 14 new).
+  - `test_phase7_flow.py` (2): the real flow end to end through Flowstate with fake workers on synthetic acme
+    data, covering every gate, each disposition path and publication; plus the digest's coverage.
+  - `test_phase7_wiring.py` (5): coverage checks, publish success and its four refusals, the spec map, the
+    schema copy.
+  - `test_phase7_skill.py` (4): the skill names only real commands, flags, nodes, gates, situations, variables
+    and artefact paths, and keeps the orchestrator out of the reconciliation.
+  - `test_phase7_determinism.py` (3).
+- **Orchestrator:** 159 pass (153 + 6 in `test_flowstate_digest.py`). One pre-existing Phase 3 test,
+  `test_fork_runs_branches_in_parallel_and_merges_by_name`, asserts wall time under 4 s. It failed once while a
+  live run and the freight suite loaded the machine, and passed alone in 4 s: a timing assumption, not a
+  regression. After the live runs, on an idle machine, all 159 pass.
+
+### Runs 2 and 3: after the fixes, concurrent, independent extractions
+
+Both used `use_rules_cache=false`, so each extracted all three contracts afresh and neither read nor wrote the
+cache.
+
+- **Flows:** both completed and published. Each had 8 workers, all exiting successfully, and passed 18 gates
+  with no retries, respawns or pauses, in about 2.5–3 minutes. Workers cost $1.77 (run 2) and $1.75 (run 3).
+- **Orchestrators:** each loaded both skills, validated, initialised with only `period`, `publish_dir` and
+  `use_rules_cache=false`, and advanced once to `completed`. The account's session limit then ended both
+  sessions before their final report: run 2 right after the completing `advance`, run 3 after reading
+  `publication.json` and checking the events. The launcher exited 1; the runs were unaffected, since every
+  worker had finished. `reconcile.sh` now says explicitly when a run completed but its orchestrator session
+  ended early.
+- **Run 2 vs run 3** (`compare_runs.py`):
+  - the three carriers' adopted rate specs price identically (144 / 2,304 / 144 probes);
+  - every line's billed, expected, delta and contract clause, every finding, every invoice total and the
+    summary are identical;
+  - the one adjudicated line was decided the same way, citing the same clauses;
+  - the same six memo files were published, with identical facts tables. Memo prose differs in wording only
+    (headlines, summaries, next steps), with the same substance.
+- **Run 1 vs run 2:** the specs are identical. The only differences are the fixes' intended ones: the duplicate
+  line's `contract_clause` is now null, and the finding's memo file name is stable.
+- **Found and fixed:** run 3's adjudication justification, which is published verbatim in the report, quoted
+  CSV column names (`freight_rs`, `chill_prem_rs`). The adjudication prompt now carries the same plain-words
+  rule as the memo guide. This has not been exercised live yet: the session limit prevented another run.
+
+Live spend for the three dry runs: about $5.29 in workers and $0.59 in orchestrator sessions.
+
+### Done-when
+
+"The report validates": yes, in all three runs. Flowstate validated the `assemble` output against the schema,
+`assemble` verified every invariant including one row per in-scope line, and `publish` verified it all again.
+
+### Known limitations
+
+- **Orchestrator reports:** only run 1 has the skill's final report end to end; runs 2 and 3 lost theirs to
+  the account session limit.
+- **Small sample:** variance is measured over three live runs, and the July data leaves little for agents to
+  decide (one adjudicated line, six memos). Agreement across independent extractions was perfect in all
+  three runs, but three runs cannot bound how often extraction would need its second round.
+- **Unquantifiable discount:** the Alpine volume discount cannot be quantified whenever any Alpine line is
+  undetermined (here, one line at an exact band boundary). This also makes `total_expected` null. It fails
+  closed by design (a Phase 5 interpretation), at the cost of an escalation for the whole discount.
+- **Launcher exit code:** it reflects the orchestrator session, not the run.
+- **Scale:** discovery and pricing are linear and sequential but not measured beyond 17 documents and 127 lines.
+- **Evidence:** the dry-run outputs are not committed; Phase 8 produces the deliverables and evidence.

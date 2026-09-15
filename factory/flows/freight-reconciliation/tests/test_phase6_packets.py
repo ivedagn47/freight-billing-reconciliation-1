@@ -14,7 +14,7 @@ from stage_flows import acme_priced
 
 POLICY = policy.load(FLOW_DIR / "config" / "policy.yml")
 MEMO_IDS = ["ACME-07-line-003", "ACME-07-line-004", "ACME-07-line-005",
-            "ACME-07-finding-adjustment-undetermined-volume"]
+            "ACME-07-finding-adjustment-undetermined-discount-5pct-from-3"]
 
 
 @pytest.fixture

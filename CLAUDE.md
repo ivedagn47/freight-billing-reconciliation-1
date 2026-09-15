@@ -32,10 +32,10 @@ phase's decisions and is the source for `DESIGN.md`.
   and `dynamic_fanout`. Nested fork/fan-out regions are rejected.
 - `.claude/skills/graph-orchestrator/` — **implemented (Phase 4)**, see "graph-orchestrator skill"
   below.
-- `factory/flows/freight-reconciliation/` — **deterministic code layer (Phase 5) and agent nodes
-  (Phase 6)**, see "Freight code layer" and "Freight agent nodes" below. The agent nodes are exercised
-  through isolation flows in `tests/stages/`; the reconciliation DOT/flow.yml and the reconcile skill are
-  Phase 7.
+- `factory/flows/freight-reconciliation/` — **implemented through Phase 7**: the deterministic code layer
+  (Phase 5), the agent nodes (Phase 6), and the wired `freight-reconciliation` flow with the
+  `.claude/skills/reconcile-freight/` entry skill (Phase 7); see "Freight code layer", "Freight agent nodes"
+  and "Reconciliation flow" below. The final run, committed evidence and DESIGN.md are Phase 8.
 - Kit shell files were committed without the executable bit. Both `bin/` wrappers are fixed; flowstate
   runs flow scripts, gates and reducers through their `#!` interpreter, so the rest work unchanged.
 - `smoke-branch/scripts/reduce.sh` was missing from the kit and has been added as a minimal fixture.
@@ -69,6 +69,11 @@ PYTHONPATH=factory/flows/freight-reconciliation orchestrator/.venv/bin/python -m
 orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/run_stage.py rules       # Opus x6, real contracts
 orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/run_stage.py adjudicate  # Sonnet, synthetic packets
 orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/run_stage.py memos       # Sonnet, synthetic report
+
+# Reconcile a period with real workers (spends tokens). Interactive equivalent: /reconcile-freight 2026-07
+factory/flows/freight-reconciliation/reconcile.sh 2026-07                                   # publishes to the repo root
+RUNS_DIR=runs/_dry PUBLISH_DIR=runs/_dry/published factory/flows/freight-reconciliation/reconcile.sh 2026-07
+orchestrator/.venv/bin/python factory/flows/freight-reconciliation/tests/live/compare_runs.py RUN_DIR_A RUN_DIR_B
 ```
 
 Lifecycle and agent-node tests need a working `tmux`; several flow scripts need `jq`. Scratch runs go
@@ -131,7 +136,8 @@ decisions, status), `execution.py` (one agent/script node inside a `Scope`, as n
   (the agentctl registry), `logs/` (script runs, gate evidence, rejected-output snapshots; branch
   logs under `logs/branches/<branch_id>/`, reducer runs under `logs/joins/<join>/`). `advance`/
   `retry`/`respawn` take a non-blocking `.advance.lock` lease; `pause`/`abort`/`status` do not.
-  The flow digest recorded at init must still match, or `advance` returns `flow_changed`.
+  The flow digest recorded at init (flow files plus the flow.yml's `digest_include` globs) must still
+  match, or `advance` returns `flow_changed`.
 - **Variables**: run inputs via `init --var` (lists/dicts as JSON), builtins (`_run_id`, `_run_dir`,
   `_run_artefact_dir`, `_flow_dir`, `_node_id`, `_session_id` for agents; inside regions also
   `_branch_id`, `_branch_index`, `_parallel_node`, and `item` for dynamic_fanout), and
@@ -308,6 +314,43 @@ thin bash wrappers around `python -m freight` with `PYTHONPATH=$FLOWSTATE_VAR__f
   retry; disagreement → second round; cache reuse); `tests/live/run_stage.py` runs them with real workers and
   a minimal scripted supervisor (not the graph-orchestrator skill).
 
+## Reconciliation flow and reconcile-freight skill (Phase 7)
+
+- **Entry points**: `/reconcile-freight 2026-07` in Claude Code (`.claude/skills/reconcile-freight/SKILL.md`:
+  validate → init with only the inputs the human gave → supervise with graph-orchestrator, using a table of
+  what this flow's situations mean → report from `publication.json`), or headless
+  `factory/flows/freight-reconciliation/reconcile.sh 2026-07`: a `claude -p` orchestrator with Bash limited to
+  `orchestrator/bin/flowstate`, Read/Grep/Glob and the Skill tool (env `MODEL`, `BUDGET`, `RUNS_DIR`, `RUN_ID`,
+  `PUBLISH_DIR`, `FRESH_EXTRACTION`); the orchestrator's transcript and tool calls go to
+  `<RUNS_DIR>/<RUN_ID>.orchestrator/`.
+- **Graph** (`freight-reconciliation.dot`): `discover` [scope-resolved] → `rules_plan` → extraction region →
+  `rules_agree` → second-round region → `rules_final` → `price` [priced-covers-scope] → `adjudication_plan` →
+  adjudication region → `merge_adjudications` → `assemble` → `memo_plan` → memo region → `render_memos` →
+  `publish`. Parsing is one script node rather than a per-file fan-out: every branch rewrites `state.yaml`,
+  and parsing is cheap sequential code.
+- **Inputs**: only `period` is required. Data and config paths, `rules_cache_dir` (`runs/_cache/rate-specs`),
+  `use_rules_cache`, batch sizes and `publish_dir` (repository root) have defaults; paths may be
+  repository-relative, resolved by `scripts/_paths.sh` because script nodes run in the artefact directory.
+- **Artefacts** (`runs/<run_id>/artefacts/`): `discovery/` (manifest, parsed documents), `rules/` (plan, clause
+  indexes, vocabulary, `agreement-1.json`, `final.json`, adopted `specs/`), `branches/<id>/` (each worker's
+  output), `pricing/priced.json`, `adjudication/` (packets, batches, merged decisions),
+  `report/reconciliation-report.json`, `memo-work/`, `memos/`, `publication.json`.
+- **Publish** (`freight/publish.py`): re-verifies the report (schema, invariants, one row per in-scope line) and
+  that the run's memos are exactly one per non-accept row, then copies `reconciliation-report.json` and
+  `memos/` to `publish_dir`; an existing `memos/` is replaced only if it holds nothing but `.md` files.
+- **Stable output**: report text, finding ids and memo ids never use names a rate spec chose (component or
+  adjustment names differ between agreeing extractions). Adjustments are identified by what they do
+  (`pricing.adjustment_terms`, e.g. `discount-5pct-from-13`); flags name the charge's kind.
+- **Digest**: the flow.yml's `digest_include` (`freight/**/*.py`, `config/*.yml`, `scripts/_paths.sh`) makes a
+  change to pricing code, policy or carrier config during a run a `flow_changed` situation. Do not edit
+  those files while a run is active.
+- **Tests**: `tests/test_phase7_flow.py` runs the real flow end to end with fake workers on synthetic acme
+  data (every gate, publication); `test_phase7_wiring.py` (coverage checks, publish refusals, the spec map,
+  the flow's schema copy equals `report.schema.json`); `test_phase7_skill.py` (the skill names only real
+  commands, flags, nodes, gates, variables and artefact paths); `orchestrator/tests/test_flowstate_digest.py`.
+  `tests/live/compare_runs.py` compares two real runs (specs, amounts, and which dispositions differ and
+  whether policy or adjudication decided them).
+
 ## Flow file architecture (DOT + flow.yml)
 
 A flow is two files per directory, `factory/flows/<name>/<name>.dot` and
@@ -325,7 +368,8 @@ A flow is two files per directory, `factory/flows/<name>/<name>.dot` and
 - **`.flow.yml`** declares `output_schemas` (mapping a node's `output_schema` name to the files it
   must produce, each validated against a JSON Schema in `definitions/`, and which flow `variables`
   those files populate) and the typed `variables` themselves (`string`, `path`, `number`,
-  `integer`, `boolean`, `dict`, `list`, `any`; optional `default`, `required`). `item` is reserved.
+  `integer`, `boolean`, `dict`, `list`, `any`; optional `default`, `required`). `item` is reserved. Optional `digest_include`: globs, inside the flow directory, of files the
+  scripts use indirectly (an imported package, config); they join the flow digest.
 - Variables populated by one node are exposed to scripts/gates downstream as
   `FLOWSTATE_VAR_<name>` environment variables (lists/dicts as JSON).
 - `working_dir="{_run_artefact_dir}"` — the per-run (or per-branch) artefact directory.

@@ -167,7 +167,7 @@ def test_adjudication_rejects_an_unoffered_disposition_then_merges(tmp_path, run
 
 # ---------------------------------------------------------------- memos
 
-MEMO_IDS = ["ACME-07-line-003", "ACME-07-line-004", "ACME-07-line-005", "ACME-07-finding-adjustment-undetermined-volume"]
+MEMO_IDS = ["ACME-07-line-003", "ACME-07-line-004", "ACME-07-line-005", "ACME-07-finding-adjustment-undetermined-discount-5pct-from-3"]
 
 
 def drafts(summary_of_first: str) -> dict:

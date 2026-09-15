@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Discovery manifest (script output)",
+  "type": "object",
+  "required": [
+    "period",
+    "documents",
+    "in_scope",
+    "reference",
+    "unresolved",
+    "carriers"
+  ],
+  "properties": {
+    "period": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}$"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "doc_id",
+          "doc_type",
+          "carrier",
+          "source_file",
+          "scope",
+          "reason",
+          "line_count"
+        ],
+        "properties": {
+          "scope": {
+            "enum": [
+              "in_scope",
+              "reference",
+              "unresolved"
+            ]
+          }
+        }
+      }
+    },
+    "in_scope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "reference": {
+      "type": "array"
+    },
+    "unresolved": {
+      "type": "array"
+    },
+    "carriers": {
+      "type": "object"
+    }
+  }
+}

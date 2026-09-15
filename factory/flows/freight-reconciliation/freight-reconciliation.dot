@@ -1,0 +1,130 @@
+// freight-reconciliation: reconcile one billing period's carrier invoices against BlueFin's shipment
+// records and rate contracts, producing reconciliation-report.json and memos/.
+//
+// Code does everything deterministic (parsing, scope, pricing, policy, assembly, checks); agents do only
+// what needs reading or judgement (contract extraction, bounded adjudication, memo prose), and every
+// agent output passes deterministic gates before anything uses it.
+//
+//   discover [scope resolved]
+//   -> rules_plan -> extract_fan -> extract_rules [traced, audited] -> extract_join
+//   -> rules_agree -> rerun_fan -> extract_rules_rerun [traced, audited] -> rerun_join -> rules_final
+//   -> price [every in-scope line priced once]
+//   -> adjudication_plan -> adjudicate_fan -> adjudicate [grounded, audited] -> adjudicate_join -> merge_adjudications
+//   -> assemble (verified)
+//   -> memo_plan -> memo_fan -> write_memos [grounded, audited] -> memo_join -> render_memos
+//   -> publish (re-verified) -> done
+
+digraph freight_reconciliation {
+  graph [label="Freight billing reconciliation"]
+
+  start               [shape=Mdiamond]
+
+  discover            [shape=box, runner=script, script="scripts/discover.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="discover_outputs",
+                       description="Parse every invoice document; in scope: the period's invoices and credit notes correcting them."]
+
+  rules_plan          [shape=box, runner=script, script="scripts/rules-plan.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="rules_plan_outputs",
+                       description="Clause indexes, shipment vocabulary, cache lookups; two extraction assignments per carrier in scope without a valid cached spec."]
+
+  extract_fan         [runner=dynamic_fanout, items="extraction_items", max_parallel=6,
+                       description="One branch per independent extraction copy (empty when every spec is cached)."]
+
+  extract_rules       [shape=box, prompt_template="prompts/extract-rules.md", working_dir="{_run_artefact_dir}",
+                       output_schema="extract_outputs", model="opus", permission_mode="dontAsk", max_budget_usd=5,
+                       stall_after=900,
+                       description="Agent: transcribe one contract into a rate spec, citing a clause for every number."]
+
+  extract_join        [runner=join, description="Every copy extracted, traced to its contract and audited."]
+
+  rules_agree         [shape=box, runner=script, script="scripts/rules-agree.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="rules_agree_outputs",
+                       description="Round 1: compare the two copies per carrier by pricing behaviour; adopt, or assign a second round."]
+
+  rerun_fan           [runner=dynamic_fanout, items="rerun_items", max_parallel=6,
+                       description="Second-round copies for carriers whose first copies disagreed (usually none)."]
+
+  extract_rules_rerun [shape=box, prompt_template="prompts/extract-rules.md", working_dir="{_run_artefact_dir}",
+                       output_schema="rerun_outputs", model="opus", permission_mode="dontAsk", max_budget_usd=5,
+                       stall_after=900,
+                       description="Agent: the same extraction task, in a fresh session."]
+
+  rerun_join          [runner=join, description="Every second-round copy extracted, traced and audited."]
+
+  rules_final         [shape=box, runner=script, script="scripts/rules-final.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="rules_final_outputs",
+                       description="Round 2 must agree copy against copy; adopt specs and write the cache; stop if a carrier has none."]
+
+  price               [shape=box, runner=script, script="scripts/price.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="price_outputs",
+                       description="Match lines to shipments, compute contract amounts and flags, apply the disposition policy."]
+
+  adjudication_plan   [shape=box, runner=script, script="scripts/adjudication-plan.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="adjudication_plan_outputs",
+                       description="Batch the lines policy left open into facts packets (empty when policy decided every line)."]
+
+  adjudicate_fan      [runner=dynamic_fanout, items="adjudication_batches", max_parallel=4,
+                       description="One branch per adjudication batch."]
+
+  adjudicate          [shape=box, prompt_template="prompts/adjudicate.md", working_dir="{_run_artefact_dir}",
+                       output_schema="adjudicate_outputs", model="sonnet", permission_mode="dontAsk", max_budget_usd=2,
+                       description="Agent: choose one offered disposition per open line and justify it from the packet."]
+
+  adjudicate_join     [runner=join, description="Every batch decided, grounded and audited."]
+
+  merge_adjudications [shape=box, runner=script, script="scripts/merge-adjudications.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="merge_outputs",
+                       description="Re-check every batch; every open line decided exactly once."]
+
+  assemble            [shape=box, runner=script, script="scripts/assemble.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="assemble_outputs",
+                       description="Build reconciliation-report.json and verify it against the schema and every invariant."]
+
+  memo_plan           [shape=box, runner=script, script="scripts/memo-plan.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="memo_plan_outputs",
+                       description="One facts entry per non-accept line and finding, batched into packets."]
+
+  memo_fan            [runner=dynamic_fanout, items="memo_batches", max_parallel=4,
+                       description="One branch per memo batch."]
+
+  write_memos         [shape=box, prompt_template="prompts/write-memos.md", working_dir="{_run_artefact_dir}",
+                       output_schema="write_memos_outputs", model="sonnet", permission_mode="dontAsk", max_budget_usd=2,
+                       description="Agent: draft headline, summary, contract basis and next step for each memo."]
+
+  memo_join           [runner=join, description="Every memo batch drafted, grounded and audited."]
+
+  render_memos        [shape=box, runner=script, script="scripts/render-memos.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="render_outputs",
+                       description="Re-check every batch; render one markdown memo per item with a facts table from the report."]
+
+  publish             [shape=box, runner=script, script="scripts/publish.sh", working_dir="{_run_artefact_dir}",
+                       output_schema="publish_outputs",
+                       description="Re-verify report and memos; copy reconciliation-report.json and memos/ to publish_dir."]
+
+  done                [shape=Msquare]
+
+  start               -> discover
+  discover            -> rules_plan [gates="gates/scope-resolved.sh"]
+  rules_plan          -> extract_fan
+  extract_fan         -> extract_rules
+  extract_rules       -> extract_join [gates="gates/rate-spec-traced.sh,gates/worker-inputs-only.sh"]
+  extract_join        -> rules_agree
+  rules_agree         -> rerun_fan
+  rerun_fan           -> extract_rules_rerun
+  extract_rules_rerun -> rerun_join [gates="gates/rate-spec-traced.sh,gates/worker-inputs-only.sh"]
+  rerun_join          -> rules_final
+  rules_final         -> price
+  price               -> adjudication_plan [gates="gates/priced-covers-scope.sh"]
+  adjudication_plan   -> adjudicate_fan
+  adjudicate_fan      -> adjudicate
+  adjudicate          -> adjudicate_join [gates="gates/adjudications-grounded.sh,gates/worker-inputs-only.sh"]
+  adjudicate_join     -> merge_adjudications
+  merge_adjudications -> assemble
+  assemble            -> memo_plan
+  memo_plan           -> memo_fan
+  memo_fan            -> write_memos
+  write_memos         -> memo_join [gates="gates/memos-grounded.sh,gates/worker-inputs-only.sh"]
+  memo_join           -> render_memos
+  render_memos        -> publish
+  publish             -> done
+}

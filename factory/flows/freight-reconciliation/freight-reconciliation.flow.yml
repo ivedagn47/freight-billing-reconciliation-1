@@ -1,0 +1,176 @@
+# Companion schema for freight-reconciliation.dot.
+description: Reconcile one billing period's carrier invoices; publish reconciliation-report.json and memos/.
+
+# Files the scripts and gates depend on without naming them as node attributes. They join the flow digest,
+# so changing pricing code, policy or carrier config during a run is reported as flow_changed.
+digest_include:
+  - "freight/**/*.py"
+  - "config/*.yml"
+  - "scripts/_paths.sh"
+
+output_schemas:
+  discover_outputs:
+    files:
+      - {name: manifest, path: "{_run_artefact_dir}/discovery/manifest.json", definition: manifest}
+    sets_variables:
+      manifest: manifest
+
+  rules_plan_outputs:
+    files:
+      - {name: plan, path: "{_run_artefact_dir}/rules/plan.json", definition: rules-plan}
+    sets_variables:
+      rules_plan: plan
+      extraction_items: {file: plan, pointer: /extraction_items}
+      clauses_dir: {file: plan, pointer: /clauses_dir}
+
+  extract_outputs:
+    files:
+      - {name: spec, path: "{_run_artefact_dir}/rate-spec.json", definition: rate-spec}
+    sets_variables:
+      rate_spec: spec
+
+  rules_agree_outputs:
+    files:
+      - {name: agreement, path: "{_run_artefact_dir}/rules/agreement-1.json", definition: rules-agreement}
+    sets_variables:
+      rules_agreement: agreement
+      rerun_items: {file: agreement, pointer: /rerun_items}
+
+  rerun_outputs:
+    files:
+      - {name: spec, path: "{_run_artefact_dir}/rate-spec.json", definition: rate-spec}
+    sets_variables:
+      rate_spec_rerun: spec
+
+  rules_final_outputs:
+    files:
+      - {name: final, path: "{_run_artefact_dir}/rules/final.json", definition: rules-final}
+    sets_variables:
+      rules_final: final
+      rate_specs: {file: final, pointer: /specs}
+
+  price_outputs:
+    files:
+      - {name: priced, path: "{_run_artefact_dir}/pricing/priced.json", definition: priced}
+    sets_variables:
+      priced: priced
+
+  adjudication_plan_outputs:
+    files:
+      - {name: plan, path: "{_run_artefact_dir}/adjudication/batches.json", definition: adjudication-batches}
+    sets_variables:
+      adjudication_plan: plan
+      adjudication_batches: {file: plan, pointer: /batches}
+
+  adjudicate_outputs:
+    files:
+      - {name: decisions, path: "{_run_artefact_dir}/adjudications.json", definition: adjudications}
+    sets_variables:
+      adjudication: decisions
+
+  merge_outputs:
+    files:
+      - {name: merged, path: "{_run_artefact_dir}/adjudication/merged.json", definition: adjudications-merged}
+    sets_variables:
+      adjudications: merged
+
+  assemble_outputs:
+    files:
+      - {name: report, path: "{_run_artefact_dir}/report/reconciliation-report.json", definition: reconciliation-report}
+    sets_variables:
+      report: report
+
+  memo_plan_outputs:
+    files:
+      - {name: plan, path: "{_run_artefact_dir}/memo-work/batches.json", definition: memo-batches}
+    sets_variables:
+      memo_plan: plan
+      memo_batches: {file: plan, pointer: /batches}
+
+  write_memos_outputs:
+    files:
+      - {name: drafts, path: "{_run_artefact_dir}/memo-drafts.json", definition: memo-drafts}
+    sets_variables:
+      memo_draft: drafts
+
+  render_outputs:
+    files:
+      - {name: index, path: "{_run_artefact_dir}/memo-work/index.json", definition: memos-index}
+    sets_variables:
+      memos_index: index
+
+  publish_outputs:
+    files:
+      - {name: publication, path: "{_run_artefact_dir}/publication.json", definition: publication}
+    sets_variables:
+      publication: publication
+
+variables:
+  # ---- run inputs (paths may be absolute or relative to the repository root)
+  period:
+    type: string
+    description: Billing period to reconcile, YYYY-MM.
+  invoices_dir:
+    type: path
+    default: data/invoices
+  shipments_file:
+    type: path
+    default: data/shipments.json
+  carriers_config:
+    type: path
+    default: factory/flows/freight-reconciliation/config/carriers.yml
+  data_root:
+    type: path
+    default: "."
+    description: Directory the carrier config's contract paths are relative to.
+  report_schema:
+    type: path
+    default: report.schema.json
+  rules_cache_dir:
+    type: path
+    default: runs/_cache/rate-specs
+  use_rules_cache:
+    type: boolean
+    default: true
+    description: false extracts every contract afresh; the cache is then neither read nor written.
+  carrier_ids:
+    type: string
+    default: ""
+    description: Only used by rules_plan when there is no manifest; this flow always has one.
+  adjudication_batch_size:
+    type: integer
+    default: 10
+  memo_batch_size:
+    type: integer
+    default: 8
+  publish_dir:
+    type: path
+    default: "."
+    description: Where reconciliation-report.json and memos/ are published.
+
+  # ---- produced by nodes
+  manifest: {type: path}
+  rules_plan: {type: path}
+  extraction_items: {type: list}
+  clauses_dir: {type: path}
+  rate_spec:
+    type: path
+    description: Per branch, the copy's rate spec; after the join, the list of them in branch order.
+  rules_agreement: {type: path}
+  rerun_items: {type: list}
+  rate_spec_rerun: {type: path}
+  rules_final: {type: path}
+  rate_specs:
+    type: dict
+    description: Carrier -> adopted rate spec path.
+  priced: {type: path}
+  adjudication_plan: {type: path}
+  adjudication_batches: {type: list}
+  adjudication: {type: path}
+  adjudications: {type: path}
+  report: {type: path}
+  memo_plan: {type: path}
+  memo_batches: {type: list}
+  memo_draft: {type: path}
+  memos_index: {type: path}
+  publication: {type: path}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Publication record (script output)",
+  "type": "object",
+  "required": [
+    "dest",
+    "report",
+    "report_sha256",
+    "memos_dir",
+    "memos",
+    "summary"
+  ],
+  "properties": {
+    "dest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "memos_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "memos": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "summary": {
+      "type": "object"
+    }
+  }
+}

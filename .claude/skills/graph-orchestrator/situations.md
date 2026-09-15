@@ -50,7 +50,7 @@ a branch, with `.respawn-N` appended for replacements. `run_dir` comes from `flo
 | `no_route` | No outgoing condition was true | `conditions` | abort | Pause |
 | `ambiguous_route` | More than one outgoing condition was true | `edges` | abort | Pause |
 | `fanout_invalid` | A `dynamic_fanout` items value is not a list, unreadable, or over `max_items` | `node` (the fan-out), `message` | abort | Pause |
-| `flow_changed` | Flow files changed after `init` (or no longer load) | `message`, `details` | abort | Pause; never edit files back yourself |
+| `flow_changed` | Flow files, or files matched by the flow.yml's `digest_include` (e.g. code the scripts import), changed after `init` (or no longer load) | `message`, `details` | abort | Pause; never edit files back yourself |
 
 ## Branch fields
 
